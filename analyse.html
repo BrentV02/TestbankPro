@@ -163,7 +163,11 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
   #header{height:auto;min-height:52px;padding:8px 12px;gap:8px}
   #main{padding:12px 10px}
   .btn-lbl{display:none}
-  .chart-wrap-lijn{height:240px}
+  .chart-wrap-lijn{display:none!important}
+  #lijn-hover-panel{display:none!important}
+  .reset-zoom-btn{display:none!important}
+  .fs-open-btn{width:100%;padding:12px 16px;font-size:15px;background:#1d4ed8;color:#fff;border-radius:10px;text-align:center}
+  .fs-open-btn:hover{background:#1e40af;color:#fff}
   .chart-wrap-staaf{height:200px}
   .vtbl th,.vtbl td{padding:7px 10px;font-size:12px}
   .selectie-balk{gap:6px}
@@ -814,7 +818,7 @@ function renderVergelijking(){
           </div>
         </div>
         <div style="margin-bottom:10px">
-          <button class="fs-open-btn" onclick="openVollescherm()">⛶ Fullscreen</button>
+          <button class="fs-open-btn" onclick="openVollescherm()">⛶ Toon curve</button>
         </div>
         <div class="chart-wrap chart-wrap-lijn"><canvas id="lijn-chart"></canvas></div>
         <div class="lijn-hover-panel" id="lijn-hover-panel"></div>
