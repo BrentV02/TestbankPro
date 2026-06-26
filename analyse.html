@@ -85,6 +85,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .reset-zoom-btn{background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:7px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:#374151;display:none}
 .reset-zoom-btn.zichtbaar{display:inline-block}
 .reset-zoom-btn:hover{background:#e5e7eb}
+.fs-open-wrap{display:none;margin-bottom:10px}
 .fs-open-btn{background:#374151;border:none;color:#d1d5db;border-radius:7px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
 .fs-open-btn:hover{background:#4b5563;color:#fff}
 /* Fullscreen grafiek overlay */
@@ -170,6 +171,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
   .chart-wrap-lijn{display:none!important}
   #lijn-hover-panel{display:none!important}
   .reset-zoom-btn{display:none!important}
+  .fs-open-wrap{display:block}
   .fs-open-btn{width:100%;padding:12px 16px;font-size:15px;background:#1d4ed8;color:#fff;border-radius:10px;text-align:center}
   .fs-open-btn:hover{background:#1e40af;color:#fff}
   .chart-wrap-staaf{height:200px}
@@ -821,7 +823,7 @@ function renderVergelijking(){
             <button class="toggle-btn" data-modus="nm" onclick="setLijnModus('nm')">Nm</button>
           </div>
         </div>
-        <div style="margin-bottom:10px">
+        <div class="fs-open-wrap">
           <button class="fs-open-btn" onclick="openVollescherm()">⛶ Toon curve</button>
         </div>
         <div class="chart-wrap chart-wrap-lijn"><canvas id="lijn-chart"></canvas></div>
