@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carburatoren — ProDynoDFK</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100vh;overflow-x:hidden}
+#header{background:#111827;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;gap:12px}
+.logo{display:flex;align-items:center;gap:12px;cursor:pointer;order:-1}
+.logo-name{font-weight:800;font-size:18px;letter-spacing:-0.5px}
+.nav-wrap{position:relative;flex-shrink:0;order:1}
+.nav-toggle{background:#374151;border:none;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;gap:7px;font-weight:700;font-family:inherit}
+.nav-toggle:hover{background:#4b5563}
+.nav-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#1f2937;border-radius:12px;min-width:230px;box-shadow:0 8px 32px rgba(0,0,0,.35);z-index:9999;display:none;overflow:hidden;border:1px solid #374151}
+.nav-dropdown.open{display:block}
+.nav-header{padding:10px 16px 8px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 16px;color:#d1d5db;cursor:pointer;font-size:14px;font-weight:600;border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .12s}
+.nav-item:hover{background:#374151;color:#fff}
+.nav-item.active{background:#1e3a5f;color:#60a5fa}
+.nav-divider{height:1px;background:#374151;margin:4px 0}
+#main{max-width:860px;margin:0 auto;padding:24px 16px}
+.page-title{font-size:19px;font-weight:800;margin:0}
+.head-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.btn-blauw{background:#1d4ed8;border:none;color:#fff;border-radius:8px;padding:8px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-blauw:hover{background:#1e40af}
+.btn-outline{background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;color:#374151}
+.btn-outline:hover{border-color:#2563eb;color:#2563eb}
+.btn-rood{background:#ef4444;border:none;color:#fff;border-radius:8px;padding:7px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-rood:hover{background:#dc2626}
+.btn-back{background:none;border:none;cursor:pointer;color:#6b7280;font-size:20px;padding:0;font-family:inherit}
+.empty-state{background:#fff;border-radius:12px;text-align:center;padding:48px 24px;color:#9ca3af;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-size:16px;font-weight:700;color:#374151;margin-bottom:6px}
+
+/* Carbu cards */
+.carbu-card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:12px;overflow:hidden;cursor:pointer;transition:box-shadow .15s}
+.carbu-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.carbu-card-head{padding:14px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #f3f4f6}
+.carbu-naam{font-size:16px;font-weight:800;color:#111827}
+.carbu-sub{font-size:12px;color:#6b7280;margin-top:2px}
+.carbu-type-badge{background:#e0e7ff;color:#3730a3;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.carbu-settings{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:none}
+.carbu-setting-blok{padding:12px 18px}
+.carbu-setting-blok:first-child{border-right:1px solid #f3f4f6}
+.carbu-setting-lbl{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.carbu-setting-rij{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.carbu-setting-key{font-size:12px;color:#6b7280}
+.carbu-setting-val{font-size:13px;font-weight:700;color:#111827}
+
+/* Formulier */
+.form-card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.1);padding:24px}
+.form-section{margin-bottom:20px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.4px}
+.inp{border:1.5px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:#111827;background:#fff;transition:border-color .15s;width:100%}
+.inp:focus{outline:none;border-color:#2563eb}
+.setting-blok{border-radius:8px;padding:14px;margin-top:4px}
+.setting-blok-baan{background:#f8fafc;border:1px solid #e5e7eb}
+.setting-blok-test{background:#eff6ff;border:1.5px solid #bfdbfe}
+.setting-blok-titel{font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.setting-blok-test .setting-blok-titel{color:#1d4ed8}
+.setting-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.opmerk-area{border:1.5px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:#111827;width:100%;min-height:80px;resize:vertical}
+.opmerk-area:focus{outline:none;border-color:#2563eb}
+
+/* Zoekbalk */
+.zoek-wrap{position:relative;flex:1;min-width:180px}
+.zoek-inp{border:1.5px solid #e5e7eb;border-radius:8px;padding:8px 12px 8px 34px;font-size:14px;font-family:inherit;color:#111827;width:100%;background:#fff}
+.zoek-inp:focus{outline:none;border-color:#2563eb}
+.zoek-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:15px}
+
+/* Divider */
+.sectie-label{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px}
+
+@media(max-width:600px){
+  #header{height:auto;min-height:52px;padding:8px 12px;gap:8px}
+  #main{padding:12px 10px}
+  .carbu-settings{grid-template-columns:1fr}
+  .carbu-setting-blok:first-child{border-right:none;border-bottom:1px solid #f3f4f6}
+}
+</style>
+</head>
+<body>
+
+<header id="header">
+  <div style="display:flex;align-items:center;gap:10px;order:1;margin-left:auto">
+    <div class="nav-wrap">
+      <button class="nav-toggle" id="nav-toggle" onclick="toggleNav()">☰ <span style="font-size:13px;font-weight:700">Menu</span></button>
+      <div class="nav-dropdown" id="nav-dropdown">
+        <div class="nav-header">Navigatie</div>
+        <button class="nav-item" onclick="window.location.href='index.html'">Sessies</button>
+        <button class="nav-item" onclick="window.location.href='motoren.html'">Motoren</button>
+        <button class="nav-item" onclick="window.location.href='klanten.html'">Klanten</button>
+        <button class="nav-item" onclick="window.location.href='analyse.html'">Analyse</button>
+        <button class="nav-item active">Carburatoren</button>
+        <div class="nav-divider"></div>
+        <button class="nav-item" onclick="doLogout()">Afmelden</button>
+      </div>
+    </div>
+  </div>
+  <div class="logo" onclick="window.location.href='index.html'">
+    <img src="logos/dfk-engines-transp.png" style="height:52px;object-fit:contain;display:block">
+    <span class="logo-name">ProDynoDFK</span>
+  </div>
+</header>
+
+<div id="main"><div style="text-align:center;padding:60px;color:#6b7280">⏳ Laden...</div></div>
+
+<script>
+const SUPABASE_URL = 'https://jonfknallwdyknxwcqww.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvbmZrbmFsbHdkeWtueHdjcXd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNDAwMjUsImV4cCI6MjA5NzgxNjAyNX0.A-uUnNT-Nlwf9ArAd56Ujml5A0XW6G0_mj8RE24On8A';
+
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function uuid(){ if(typeof crypto!=='undefined'&&crypto.randomUUID) return crypto.randomUUID(); return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:r&0x3|0x8).toString(16);}); }
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let carbus = [];
+let view = 'lijst'; // 'lijst' | 'nieuw' | 'edit'
+let huidig = null;  // carburator in bewerking
+let zoek = '';
+
+const OPSLAG = 'tbp_carburators';
+function laadCarbus(){ try{ carbus = JSON.parse(localStorage.getItem(OPSLAG)||'[]'); }catch{ carbus=[]; } }
+function slaCarbus(){ localStorage.setItem(OPSLAG, JSON.stringify(carbus)); }
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  if(view==='lijst') renderLijst();
+  else renderForm();
+}
+
+function renderLijst(){
+  const gefilterd = zoek.trim()
+    ? carbus.filter(c=>[c.naam,c.merk,c.model,c.motorType].join(' ').toLowerCase().includes(zoek.toLowerCase()))
+    : [...carbus];
+
+  // Groepeer op motortype
+  const groepen = {};
+  gefilterd.forEach(c=>{
+    const k = c.motorType?.trim() || '(geen motortype)';
+    if(!groepen[k]) groepen[k]=[];
+    groepen[k].push(c);
+  });
+
+  const leeg = carbus.length===0;
+  document.getElementById('main').innerHTML = `
+    <div class="head-row">
+      <h2 class="page-title">Carburatoren</h2>
+      <div class="zoek-wrap">
+        <span class="zoek-icon">🔍</span>
+        <input class="zoek-inp" id="zoek-inp" placeholder="Zoek op naam, merk, type…" value="${esc(zoek)}">
+      </div>
+      <button class="btn-blauw" onclick="nieuwCarbu()">+ Nieuwe carburator</button>
+    </div>
+    ${leeg ? `
+      <div class="empty-state">
+        <div class="empty-icon">🔧</div>
+        <div class="empty-title">Nog geen carburatoren</div>
+        <p style="font-size:13px;margin-top:6px">Voeg je eerste carburator toe om instellingen bij te houden.</p>
+      </div>` : gefilterd.length===0 ? `<div class="empty-state"><div class="empty-title">Geen resultaten voor "${esc(zoek)}"</div></div>` :
+      Object.entries(groepen).sort(([a],[b])=>a.localeCompare(b)).map(([groep,lijst])=>`
+        <div class="sectie-label">${esc(groep)}</div>
+        ${lijst.sort((a,b)=>a.naam.localeCompare(b.naam)).map(c=>carbuKaart(c)).join('')}
+      `).join('')
+    }`;
+
+  document.getElementById('zoek-inp')?.addEventListener('input', e=>{ zoek=e.target.value; render(); const el=document.getElementById('zoek-inp'); el?.focus(); });
+}
+
+function carbuKaart(c){
+  const heeftBaan = c.baanHoog||c.baanLaag;
+  const heeftTest = c.testHoog||c.testLaag;
+  return `<div class="carbu-card" onclick="bewerkCarbu('${esc(c.id)}')">
+    <div class="carbu-card-head">
+      <div style="flex:1;min-width:0">
+        <div class="carbu-naam">${esc(c.naam||'(geen naam)')}</div>
+        ${(c.merk||c.model)?`<div class="carbu-sub">${[c.merk,c.model].filter(Boolean).map(esc).join(' ')}</div>`:''}
+      </div>
+      ${c.motorType?`<span class="carbu-type-badge">${esc(c.motorType)}</span>`:''}
+      <span style="color:#9ca3af;font-size:18px;margin-left:8px">›</span>
+    </div>
+    ${(heeftBaan||heeftTest)?`<div class="carbu-settings">
+      <div class="carbu-setting-blok">
+        <div class="carbu-setting-lbl">Van de baan</div>
+        ${c.baanHoog?`<div class="carbu-setting-rij"><span class="carbu-setting-key">Hoog</span><span class="carbu-setting-val">${esc(c.baanHoog)}</span></div>`:''}
+        ${c.baanLaag?`<div class="carbu-setting-rij"><span class="carbu-setting-key">Laag</span><span class="carbu-setting-val">${esc(c.baanLaag)}</span></div>`:''}
+        ${!heeftBaan?`<span style="font-size:12px;color:#d1d5db">—</span>`:''}
+      </div>
+      <div class="carbu-setting-blok">
+        <div class="carbu-setting-lbl" style="color:#1d4ed8">Voor de test</div>
+        ${c.testHoog?`<div class="carbu-setting-rij"><span class="carbu-setting-key">Hoog</span><span class="carbu-setting-val">${esc(c.testHoog)}</span></div>`:''}
+        ${c.testLaag?`<div class="carbu-setting-rij"><span class="carbu-setting-key">Laag</span><span class="carbu-setting-val">${esc(c.testLaag)}</span></div>`:''}
+        ${!heeftTest?`<span style="font-size:12px;color:#d1d5db">—</span>`:''}
+      </div>
+    </div>`:''}
+    ${c.opmerkingen?`<div style="padding:10px 18px;font-size:12px;color:#6b7280;border-top:1px solid #f3f4f6;white-space:pre-wrap">${esc(c.opmerkingen)}</div>`:''}
+  </div>`;
+}
+
+function renderForm(){
+  const isNieuw = view==='nieuw';
+  const c = huidig || {};
+  document.getElementById('main').innerHTML = `
+    <div class="head-row" style="margin-bottom:20px">
+      <button class="btn-back" onclick="gaTerug()">←</button>
+      <h2 class="page-title">${isNieuw?'Nieuwe carburator':'Carburator bewerken'}</h2>
+    </div>
+    <div class="form-card">
+      <div class="form-section">
+        <div class="form-grid">
+          <div class="field"><label class="field-label">Naam / label *</label><input class="inp" id="f-naam" placeholder="bijv. Tillotson #1" value="${esc(c.naam||'')}"></div>
+          <div class="field"><label class="field-label">Motortype</label><input class="inp" id="f-mt" placeholder="bijv. X30" value="${esc(c.motorType||'')}"></div>
+        </div>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="field"><label class="field-label">Merk</label><input class="inp" id="f-merk" placeholder="bijv. Tillotson" value="${esc(c.merk||'')}"></div>
+          <div class="field"><label class="field-label">Model</label><input class="inp" id="f-model" placeholder="bijv. HW-27A" value="${esc(c.model||'')}"></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+        <div class="setting-blok setting-blok-baan">
+          <div class="setting-blok-titel">Carbu setting van de baan</div>
+          <div class="setting-grid">
+            <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-bh" placeholder="bijv. 1¼" value="${esc(c.baanHoog||'')}"></div>
+            <div class="field"><label class="field-label">Laag</label><input class="inp" id="f-bl" placeholder="bijv. 1" value="${esc(c.baanLaag||'')}"></div>
+          </div>
+        </div>
+        <div class="setting-blok setting-blok-test">
+          <div class="setting-blok-titel">Carbu setting voor de test</div>
+          <div class="setting-grid">
+            <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-th" placeholder="bijv. 1¼" value="${esc(c.testHoog||'')}"></div>
+            <div class="field"><label class="field-label">Laag</label><input class="inp" id="f-tl" placeholder="bijv. ¾" value="${esc(c.testLaag||'')}"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:20px">
+        <label class="field-label">Opmerkingen</label>
+        <textarea class="opmerk-area" id="f-op" placeholder="Bijv. afwijkingen, bijzonderheden…">${esc(c.opmerkingen||'')}</textarea>
+      </div>
+
+      <div id="fout-box" style="display:none;background:#fee2e2;color:#991b1b;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600"></div>
+
+      <div class="actions-row">
+        <button class="btn-blauw" onclick="slaOp()">Opslaan</button>
+        <button class="btn-outline" onclick="gaTerug()">Annuleren</button>
+        ${!isNieuw?`<button class="btn-rood" style="margin-left:auto" onclick="verwijderCarbu('${esc(c.id)}')">Verwijderen</button>`:''}
+      </div>
+    </div>`;
+}
+
+// ── ACTIES ────────────────────────────────────────────────────────────────────
+function nieuwCarbu(){ huidig={id:uuid(),naam:'',merk:'',model:'',motorType:'',baanHoog:'',baanLaag:'',testHoog:'',testLaag:'',opmerkingen:''}; view='nieuw'; render(); }
+function bewerkCarbu(id){ huidig=carbus.find(c=>c.id===id)||null; if(!huidig) return; view='edit'; render(); }
+function gaTerug(){ huidig=null; view='lijst'; render(); }
+
+function slaOp(){
+  const naam = document.getElementById('f-naam').value.trim();
+  if(!naam){
+    const b=document.getElementById('fout-box'); b.textContent='⚠️ Vul een naam in.'; b.style.display='block'; return;
+  }
+  const obj = {
+    id: huidig.id,
+    naam,
+    motorType: document.getElementById('f-mt').value.trim(),
+    merk:      document.getElementById('f-merk').value.trim(),
+    model:     document.getElementById('f-model').value.trim(),
+    baanHoog:  document.getElementById('f-bh').value.trim(),
+    baanLaag:  document.getElementById('f-bl').value.trim(),
+    testHoog:  document.getElementById('f-th').value.trim(),
+    testLaag:  document.getElementById('f-tl').value.trim(),
+    opmerkingen: document.getElementById('f-op').value.trim(),
+  };
+  const idx = carbus.findIndex(c=>c.id===obj.id);
+  if(idx>=0) carbus[idx]=obj; else carbus.unshift(obj);
+  slaCarbus();
+  gaTerug();
+}
+
+function verwijderCarbu(id){
+  customConfirm({
+    titel:'Carburator verwijderen?',
+    tekst:'Alle instellingen van deze carburator worden permanent verwijderd.',
+    icoon:'🗑️',
+    bevestig:'Verwijderen',
+    bevestigKleur:'#ef4444',
+    onOk:()=>{
+      carbus = carbus.filter(c=>c.id!==id);
+      slaCarbus();
+      gaTerug();
+    }
+  });
+}
+
+// ── CUSTOM CONFIRM ────────────────────────────────────────────────────────────
+function customConfirm({titel='',tekst='',icoon='',bevestig='OK',bevestigKleur='#1d4ed8',onOk}={}){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  el.innerHTML=`<div style="background:#fff;border-radius:14px;padding:28px 32px;box-shadow:0 8px 40px rgba(0,0,0,0.18);max-width:340px;width:90%;text-align:center">
+    ${icoon?`<div style="font-size:32px;margin-bottom:10px">${icoon}</div>`:''}
+    <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">${titel}</div>
+    ${tekst?`<div style="font-size:13px;color:#6b7280;margin-bottom:20px">${tekst}</div>`:'<div style="margin-bottom:20px"></div>'}
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button style="background:#f3f4f6;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit" onclick="this.closest('div[style]').remove()">Annuleren</button>
+      <button style="background:${bevestigKleur};border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit" id="cc-ok">${bevestig}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  el.querySelector('#cc-ok').onclick=()=>{el.remove();onOk();};
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function toggleNav(){ document.getElementById('nav-dropdown').classList.toggle('open'); }
+document.addEventListener('click',e=>{ if(!e.target.closest('.nav-wrap')) document.getElementById('nav-dropdown')?.classList.remove('open'); });
+
+function doLogout(){
+  if(typeof supabase!=='undefined') supabase.auth.signOut().catch(()=>{});
+  window.location.href='index.html';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+laadCarbus();
+render();
+</script>
+</body>
+</html>
