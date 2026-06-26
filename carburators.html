@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="logos/dfk-icon.png">
-<link rel="apple-touch-icon" href="logos/dfk-icon.png">
-<title>Carburatoren — ProDynoDFK</title>
+<link rel="icon" href="logos/dfk-engines-transp.png">
+<link rel="apple-touch-icon" href="logos/dfk-engines-transp.png">
+<title>Carburatoren â€” ProDynoDFK</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -92,7 +92,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 <header id="header">
   <div style="display:flex;align-items:center;gap:10px;order:1;margin-left:auto">
     <div class="nav-wrap">
-      <button class="nav-toggle" id="nav-toggle" onclick="toggleNav()">☰ <span style="font-size:13px;font-weight:700">Menu</span></button>
+      <button class="nav-toggle" id="nav-toggle" onclick="toggleNav()">â˜° <span style="font-size:13px;font-weight:700">Menu</span></button>
       <div class="nav-dropdown" id="nav-dropdown">
         <div class="nav-header">Navigatie</div>
         <button class="nav-item" onclick="window.location.href='index.html'">Sessies</button>
@@ -111,7 +111,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
   </div>
 </header>
 
-<div id="main"><div style="text-align:center;padding:60px;color:#6b7280">⏳ Laden...</div></div>
+<div id="main"><div style="text-align:center;padding:60px;color:#6b7280">â³ Laden...</div></div>
 
 <script>
 const SUPABASE_URL = 'https://jonfknallwdyknxwcqww.supabase.co';
@@ -120,7 +120,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 function uuid(){ if(typeof crypto!=='undefined'&&crypto.randomUUID) return crypto.randomUUID(); return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:r&0x3|0x8).toString(16);}); }
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
+// â”€â”€ STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let carbus = [];
 let view = 'lijst'; // 'lijst' | 'nieuw' | 'edit'
 let huidig = null;  // carburator in bewerking
@@ -130,7 +130,7 @@ const OPSLAG = 'tbp_carburators';
 function laadCarbus(){ try{ carbus = JSON.parse(localStorage.getItem(OPSLAG)||'[]'); }catch{ carbus=[]; } }
 function slaCarbus(){ localStorage.setItem(OPSLAG, JSON.stringify(carbus)); }
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
+// â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function render(){
   if(view==='lijst') renderLijst();
   else renderForm();
@@ -154,14 +154,14 @@ function renderLijst(){
     <div class="head-row">
       <h2 class="page-title">Carburatoren</h2>
       <div class="zoek-wrap">
-        <span class="zoek-icon">🔍</span>
-        <input class="zoek-inp" id="zoek-inp" placeholder="Zoek op naam, merk, type…" value="${esc(zoek)}">
+        <span class="zoek-icon">ðŸ”</span>
+        <input class="zoek-inp" id="zoek-inp" placeholder="Zoek op naam, merk, typeâ€¦" value="${esc(zoek)}">
       </div>
       <button class="btn-blauw" onclick="nieuwCarbu()">+ Nieuwe carburator</button>
     </div>
     ${leeg ? `
       <div class="empty-state">
-        <div class="empty-icon">🔧</div>
+        <div class="empty-icon">ðŸ”§</div>
         <div class="empty-title">Nog geen carburatoren</div>
         <p style="font-size:13px;margin-top:6px">Voeg je eerste carburator toe om instellingen bij te houden.</p>
       </div>` : gefilterd.length===0 ? `<div class="empty-state"><div class="empty-title">Geen resultaten voor "${esc(zoek)}"</div></div>` :
@@ -184,20 +184,20 @@ function carbuKaart(c){
         ${(c.merk||c.model)?`<div class="carbu-sub">${[c.merk,c.model].filter(Boolean).map(esc).join(' ')}</div>`:''}
       </div>
       ${c.motorType?`<span class="carbu-type-badge">${esc(c.motorType)}</span>`:''}
-      <span style="color:#9ca3af;font-size:18px;margin-left:8px">›</span>
+      <span style="color:#9ca3af;font-size:18px;margin-left:8px">â€º</span>
     </div>
     ${(heeftBaan||heeftTest)?`<div class="carbu-settings">
       <div class="carbu-setting-blok">
         <div class="carbu-setting-lbl">Van de baan</div>
         ${c.baanHoog?`<div class="carbu-setting-rij"><span class="carbu-setting-key">Hoog</span><span class="carbu-setting-val">${esc(c.baanHoog)}</span></div>`:''}
         ${c.baanLaag?`<div class="carbu-setting-rij"><span class="carbu-setting-key">Laag</span><span class="carbu-setting-val">${esc(c.baanLaag)}</span></div>`:''}
-        ${!heeftBaan?`<span style="font-size:12px;color:#d1d5db">—</span>`:''}
+        ${!heeftBaan?`<span style="font-size:12px;color:#d1d5db">â€”</span>`:''}
       </div>
       <div class="carbu-setting-blok">
         <div class="carbu-setting-lbl" style="color:#1d4ed8">Voor de test</div>
         ${c.testHoog?`<div class="carbu-setting-rij"><span class="carbu-setting-key">Hoog</span><span class="carbu-setting-val">${esc(c.testHoog)}</span></div>`:''}
         ${c.testLaag?`<div class="carbu-setting-rij"><span class="carbu-setting-key">Laag</span><span class="carbu-setting-val">${esc(c.testLaag)}</span></div>`:''}
-        ${!heeftTest?`<span style="font-size:12px;color:#d1d5db">—</span>`:''}
+        ${!heeftTest?`<span style="font-size:12px;color:#d1d5db">â€”</span>`:''}
       </div>
     </div>`:''}
     ${c.opmerkingen?`<div style="padding:10px 18px;font-size:12px;color:#6b7280;border-top:1px solid #f3f4f6;white-space:pre-wrap">${esc(c.opmerkingen)}</div>`:''}
@@ -209,7 +209,7 @@ function renderForm(){
   const c = huidig || {};
   document.getElementById('main').innerHTML = `
     <div class="head-row" style="margin-bottom:20px">
-      <button class="btn-back" onclick="gaTerug()">←</button>
+      <button class="btn-back" onclick="gaTerug()">â†</button>
       <h2 class="page-title">${isNieuw?'Nieuwe carburator':'Carburator bewerken'}</h2>
     </div>
     <div class="form-card">
@@ -226,22 +226,22 @@ function renderForm(){
 
       <details ${isNieuw?'':'open'} style="margin-bottom:20px">
         <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#374151;padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px;user-select:none">
-          <span id="settings-arrow" style="font-size:11px;color:#9ca3af">▶</span>
+          <span id="settings-arrow" style="font-size:11px;color:#9ca3af">â–¶</span>
           Instellingen toevoegen <span style="font-size:11px;font-weight:500;color:#9ca3af">(optioneel)</span>
         </summary>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
           <div class="setting-blok setting-blok-baan">
             <div class="setting-blok-titel">Carbu setting van de baan</div>
             <div class="setting-grid">
-              <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-bh" placeholder="bijv. 1¼" value="${esc(c.baanHoog||'')}"></div>
+              <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-bh" placeholder="bijv. 1Â¼" value="${esc(c.baanHoog||'')}"></div>
               <div class="field"><label class="field-label">Laag</label><input class="inp" id="f-bl" placeholder="bijv. 1" value="${esc(c.baanLaag||'')}"></div>
             </div>
           </div>
           <div class="setting-blok setting-blok-test">
             <div class="setting-blok-titel">Carbu setting voor de test</div>
             <div class="setting-grid">
-              <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-th" placeholder="bijv. 1¼" value="${esc(c.testHoog||'')}"></div>
-              <div class="field"><label class="field-label">Laag</label><input class="inp" id="f-tl" placeholder="bijv. ¾" value="${esc(c.testLaag||'')}"></div>
+              <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-th" placeholder="bijv. 1Â¼" value="${esc(c.testHoog||'')}"></div>
+              <div class="field"><label class="field-label">Laag</label><input class="inp" id="f-tl" placeholder="bijv. Â¾" value="${esc(c.testLaag||'')}"></div>
             </div>
           </div>
         </div>
@@ -249,7 +249,7 @@ function renderForm(){
 
       <div class="field" style="margin-bottom:20px">
         <label class="field-label">Opmerkingen</label>
-        <textarea class="opmerk-area" id="f-op" placeholder="Bijv. afwijkingen, bijzonderheden…">${esc(c.opmerkingen||'')}</textarea>
+        <textarea class="opmerk-area" id="f-op" placeholder="Bijv. afwijkingen, bijzonderhedenâ€¦">${esc(c.opmerkingen||'')}</textarea>
       </div>
 
       <div id="fout-box" style="display:none;background:#fee2e2;color:#991b1b;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600"></div>
@@ -262,7 +262,7 @@ function renderForm(){
     </div>`;
 }
 
-// ── ACTIES ────────────────────────────────────────────────────────────────────
+// â”€â”€ ACTIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function nieuwCarbu(){ huidig={id:uuid(),naam:'',merk:'',model:'',motorType:'',baanHoog:'',baanLaag:'',testHoog:'',testLaag:'',opmerkingen:''}; view='nieuw'; render(); }
 function bewerkCarbu(id){ huidig=carbus.find(c=>c.id===id)||null; if(!huidig) return; view='edit'; render(); }
 function gaTerug(){ huidig=null; view='lijst'; render(); }
@@ -270,7 +270,7 @@ function gaTerug(){ huidig=null; view='lijst'; render(); }
 function slaOp(){
   const naam = document.getElementById('f-naam').value.trim();
   if(!naam){
-    const b=document.getElementById('fout-box'); b.textContent='⚠️ Vul een naam in.'; b.style.display='block'; return;
+    const b=document.getElementById('fout-box'); b.textContent='âš ï¸ Vul een naam in.'; b.style.display='block'; return;
   }
   const obj = {
     id: huidig.id,
@@ -294,7 +294,7 @@ function verwijderCarbu(id){
   customConfirm({
     titel:'Carburator verwijderen?',
     tekst:'Alle instellingen van deze carburator worden permanent verwijderd.',
-    icoon:'🗑️',
+    icoon:'ðŸ—‘ï¸',
     bevestig:'Verwijderen',
     bevestigKleur:'#ef4444',
     onOk:()=>{
@@ -305,7 +305,7 @@ function verwijderCarbu(id){
   });
 }
 
-// ── CUSTOM CONFIRM ────────────────────────────────────────────────────────────
+// â”€â”€ CUSTOM CONFIRM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function customConfirm({titel='',tekst='',icoon='',bevestig='OK',bevestigKleur='#1d4ed8',onOk}={}){
   const el=document.createElement('div');
   el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
@@ -323,7 +323,7 @@ function customConfirm({titel='',tekst='',icoon='',bevestig='OK',bevestigKleur='
   el.addEventListener('click',e=>{if(e.target===el)el.remove();});
 }
 
-// ── NAV ───────────────────────────────────────────────────────────────────────
+// â”€â”€ NAV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function toggleNav(){ document.getElementById('nav-dropdown').classList.toggle('open'); }
 document.addEventListener('click',e=>{ if(!e.target.closest('.nav-wrap')) document.getElementById('nav-dropdown')?.classList.remove('open'); });
 
@@ -332,9 +332,10 @@ function doLogout(){
   window.location.href='index.html';
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 laadCarbus();
 render();
 </script>
 </body>
 </html>
+
