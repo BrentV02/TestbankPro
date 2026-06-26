@@ -674,7 +674,13 @@ function parseSpx(buffer, filename) {
     const ratio = parseFloat(get('ratio'))||1.0;
     const HP_CONV = corrFact / 745.7; // Watts → HP (incl. correctiefactor)
     const NM_CONV = corrFact / ratio; // wielkoppel Nm → motor Nm (incl. correctiefactor)
-    for (let i=0;i<n;i++) {
+    // pre_count = samples vóór de ramp (motor accelereert nog niet)
+    // post_count = samples nà de ramp (motor draait uit → artefact aan het einde)
+    const preCount = parseInt(get('pre_count'))||0;
+    const postCount = parseInt(get('post_count'))||0;
+    const iStart = preCount;
+    const iEnd = n - postCount;
+    for (let i=iStart;i<iEnd;i++) {
       const rpm=rpmVals[i];
       const hp=(wattVals[i]||0)*HP_CONV;
       const nm=(nmWheelVals[i]||0)*NM_CONV;
