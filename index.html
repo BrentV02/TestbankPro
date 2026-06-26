@@ -668,12 +668,17 @@ function parseSpx(buffer, filename) {
       offset += n*4;
     }
     const rpmVals = chData['motor RPM']||[];
-    const hpVals  = chData['Vermogen']||chData['HP1 Front1']||[]; // values are already in HP
-    const nmVals  = chData['Koppel']||[]; // values are already in N*m
+    const wattVals = chData['Vermogen']||chData['HP1 Front1']||[]; // raw values in Watts
+    const nmWheelVals = chData['Koppel']||chData['TQ1 Front1']||[]; // raw values in wheel Nm
+    const corrFact = parseFloat(get('corr_fact'))||1.0;
+    const ratio = parseFloat(get('ratio'))||1.0;
+    const HP_CONV = corrFact / 745.7; // Watts → HP (incl. correctiefactor)
+    const NM_CONV = corrFact / ratio; // wielkoppel Nm → motor Nm (incl. correctiefactor)
     for (let i=0;i<n;i++) {
-      const rpm=rpmVals[i], hp=hpVals[i];
-      const nm=nmVals[i]||((rpm>0)?(hp*745.7*60)/(2*Math.PI*rpm):0);
-      if (rpm>=5500&&rpm<=16000&&hp>5) curveData.push({rpm:Math.round(rpm),hp:Math.round(hp*10)/10,nm:Math.round(nm*10)/10});
+      const rpm=rpmVals[i];
+      const hp=(wattVals[i]||0)*HP_CONV;
+      const nm=(nmWheelVals[i]||0)*NM_CONV;
+      if (rpm>=5500&&rpm<=16000&&hp>0.5) curveData.push({rpm:Math.round(rpm),hp:Math.round(hp*10)/10,nm:Math.round(nm*10)/10});
     }
     curveData.sort((a,b)=>a.rpm-b.rpm);
     const step=Math.max(1,Math.floor(curveData.length/150));

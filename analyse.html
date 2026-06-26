@@ -76,8 +76,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .wis-btn:hover{border-color:#6b7280;color:#d1d5db}
 /* Vergelijkingsresultaten */
 .verg-card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.1);padding:24px;margin-bottom:16px}
-.verg-titel{font-size:16px;font-weight:800;margin-bottom:16px;color:#111827}
-.chart-wrap{position:relative;height:300px;margin-bottom:8px}
+.verg-titel{font-size:16px;font-weight:800;margin-bottom:16px;color:#111827;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.chart-wrap{position:relative;margin-bottom:8px}
+.chart-wrap-lijn{height:360px}
+.chart-wrap-staaf{height:280px}
 /* Vergelijkingstabel */
 .vtbl{width:100%;border-collapse:collapse;font-size:13px}
 .vtbl th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;background:#f9fafb;border-bottom:1.5px solid #e5e7eb}
@@ -87,11 +89,18 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .kleur-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
 .open-pijl{transition:transform .2s;display:inline-block}
 .open-pijl.open{transform:rotate(90deg)}
+/* Geen-curve melding */
+.geen-curve-msg{background:#fef3c7;border:1.5px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-top:10px;display:flex;align-items:center;gap:8px}
+/* Toggle knop voor HP/Nm */
+.toggle-wrap{display:flex;gap:6px;flex-shrink:0}
+.toggle-btn{border:1.5px solid #e5e7eb;border-radius:7px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:#f9fafb;color:#6b7280;transition:all .15s}
+.toggle-btn.actief{background:#2563eb;color:#fff;border-color:#2563eb}
 @media(max-width:600px){
   #header{height:auto;min-height:52px;padding:8px 12px;gap:8px}
   #main{padding:12px 10px}
   .btn-lbl{display:none}
-  .chart-wrap{height:220px}
+  .chart-wrap-lijn{height:240px}
+  .chart-wrap-staaf{height:200px}
   .vtbl th,.vtbl td{padding:7px 10px;font-size:12px}
   .selectie-balk{gap:6px}
 }
@@ -163,7 +172,9 @@ let sessies = [];
 let geselecteerd = []; // [{run, sessie, kleur}]
 let zoek = '';
 let openeSessies = new Set();
-let chartInstance = null;
+let lineChartInstance = null;
+let barChartInstance = null;
+let lijnModus = 'hp'; // 'hp' of 'nm'
 
 const KLEUREN = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
 
@@ -233,7 +244,7 @@ function toggleRun(sessieId, runId){
   if(isGeselecteerd(runId)){
     geselecteerd = geselecteerd.filter(g=>g.run.id!==runId);
   } else {
-    if(geselecteerd.length>=8) return; // max 8
+    if(geselecteerd.length>=8) return;
     const kleur = KLEUREN[geselecteerd.length];
     geselecteerd = [...geselecteerd, {run, sessie, kleur}];
   }
@@ -256,12 +267,20 @@ function toggleSessieOpen(sessieId){
   render();
 }
 
+function setLijnModus(m){
+  lijnModus = m;
+  tekenLijnChart();
+  // Update toggle buttons
+  document.querySelectorAll('.toggle-btn').forEach(b=>{
+    b.classList.toggle('actief', b.dataset.modus===m);
+  });
+}
+
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render(){
   const main = document.getElementById('main');
   if(!main) return;
 
-  // Filter sessies
   const zoekLc = zoek.toLowerCase();
   const gefilterd = zoek
     ? sessies.filter(s => [s.motorNummer,s.klant,s.motorMerk,s.motorType].some(v=>(v||'').toLowerCase().includes(zoekLc))
@@ -271,7 +290,7 @@ function render(){
   // Selectiebalk
   let selectieHtml = '';
   if(geselecteerd.length>0){
-    const chips = geselecteerd.map((g,i)=>`
+    const chips = geselecteerd.map((g)=>`
       <span class="selectie-chip" style="background:${g.kleur}">
         <span class="kleur-dot" style="background:rgba(255,255,255,.4)"></span>
         ${esc(g.sessie.motorNummer)}${testNr(g.run.bestandsnaam)?` #${testNr(g.run.bestandsnaam)}`:''}
@@ -282,7 +301,7 @@ function render(){
         <span class="selectie-label">${geselecteerd.length} run${geselecteerd.length!==1?'s':''} geselecteerd</span>
         ${chips}
         <button class="wis-btn" onclick="wisSelectie()">Wis alles</button>
-        ${geselecteerd.length>=2?`<button class="vergelijk-btn" onclick="scrollNaarVergelijking()">📊 Vergelijk</button>`:''}
+        ${geselecteerd.length>=2?`<button class="vergelijk-btn" onclick="scrollNaarVergelijking()">📈 Vergelijk</button>`:''}
       </div>`;
   }
 
@@ -304,6 +323,7 @@ function render(){
               : runs.map((r,i)=>{
                   const gesel = isGeselecteerd(r.id);
                   const tnr = testNr(r.bestandsnaam);
+                  const heeftCurve = r.curveData&&r.curveData.length>0;
                   return `<div class="run-rij ${gesel?'geselecteerd':''}">
                     <span class="run-rij-nr">${i+1}</span>
                     <span class="run-rij-test" style="font-weight:700">${tnr?`Test #${tnr}`:'<span style="color:#d1d5db;font-style:italic;font-size:11px">Geen nr</span>'}</span>
@@ -311,6 +331,7 @@ function render(){
                       ${r.vermogen?`<strong>${r.vermogen} HP</strong>`:'— HP'}
                       ${r.koppel?` · ${r.koppel} Nm`:''}
                       ${r.carbu?` · <span style="color:#6b7280">${esc(r.carbu)}</span>`:''}
+                      ${heeftCurve?` <span title="Curvepunten beschikbaar" style="color:#10b981;font-size:11px">📈</span>`:''}
                       ${gesel?` <span style="color:${geselecteerd.find(g=>g.run.id===r.id)?.kleur||'#2563eb'};font-weight:700">●</span>`:''}
                     </span>
                     <button class="run-rij-btn ${gesel?'verwijderen':'toevoegen'}"
@@ -337,7 +358,6 @@ function render(){
           </div>`;
       }).join('');
 
-  // Vergelijking sectie
   const vergelijkingHtml = geselecteerd.length>=2 ? renderVergelijking() : '';
 
   main.innerHTML = `
@@ -349,18 +369,17 @@ function render(){
     <div style="margin-bottom:12px">
       <input class="inp" id="zoek-inp" value="${esc(zoek)}" placeholder="🔍  Zoek op motor, klant, merk...">
     </div>
-    <div class="sec-label">Selecteer runs om te vergelijken</div>
+    <div class="sec-label">Selecteer runs om te vergelijken (📈 = curvepunten beschikbaar)</div>
     ${sessieLijst}`;
 
   document.getElementById('zoek-inp')?.addEventListener('input',e=>{zoek=e.target.value;render();});
 
-  // Chart renderen na DOM update
-  if(geselecteerd.length>=2) setTimeout(()=>tekenChart(),0);
+  if(geselecteerd.length>=2) setTimeout(()=>{tekenLijnChart();tekenBarChart();},0);
 }
 
 // ── VERGELIJKING ──────────────────────────────────────────────────────────────
 function renderVergelijking(){
-  const cols = geselecteerd.map((g,i)=>{
+  const cols = geselecteerd.map((g)=>{
     const r = g.run;
     const s = g.sessie;
     const tnr = testNr(r.bestandsnaam);
@@ -387,7 +406,6 @@ function renderVergelijking(){
     };
   });
 
-  // Beste waarden per metriek
   const besteVerm = Math.max(...cols.map(c=>parseFloat(c.vermogen)||0));
   const besteKoppel = Math.max(...cols.map(c=>parseFloat(c.koppel)||0));
   const besteRpm = Math.max(...cols.map(c=>parseFloat(c.maxRpm)||0));
@@ -433,12 +451,32 @@ function renderVergelijking(){
     </table>
     </div>`;
 
-  // Fix de rij-helper zodat index beschikbaar is
+  // Controleer welke runs curvedata hebben
+  const metCurve = geselecteerd.filter(g=>(g.run.curveData||[]).length>0);
+  const zonderCurve = geselecteerd.filter(g=>!(g.run.curveData||[]).length);
+
+  const geenCurveMsg = zonderCurve.length>0 ? `
+    <div class="geen-curve-msg">
+      ⚠️ <strong>${zonderCurve.map(g=>`${g.sessie.motorNummer}${testNr(g.run.bestandsnaam)?' #'+testNr(g.run.bestandsnaam):''}`).join(', ')}</strong>
+      ${zonderCurve.length===1?'heeft':'hebben'} geen curvepunten — herlaad de SPX om de lijngrafieken te zien.
+    </div>` : '';
+
   return `
     <div id="vergelijking-sectie">
       <div class="verg-card">
-        <div class="verg-titel">📊 Grafiek</div>
-        <div class="chart-wrap"><canvas id="verg-chart"></canvas></div>
+        <div class="verg-titel">
+          📈 Vermogenskromme
+          <div class="toggle-wrap">
+            <button class="toggle-btn actief" data-modus="hp" onclick="setLijnModus('hp')">HP</button>
+            <button class="toggle-btn" data-modus="nm" onclick="setLijnModus('nm')">Nm</button>
+          </div>
+        </div>
+        <div class="chart-wrap chart-wrap-lijn"><canvas id="lijn-chart"></canvas></div>
+        ${geenCurveMsg}
+      </div>
+      <div class="verg-card">
+        <div class="verg-titel">📊 Piekwaarden</div>
+        <div class="chart-wrap chart-wrap-staaf"><canvas id="verg-chart"></canvas></div>
       </div>
       <div class="verg-card">
         <div class="verg-titel">📋 Vergelijkingstabel</div>
@@ -447,13 +485,101 @@ function renderVergelijking(){
     </div>`;
 }
 
-function tekenChart(){
+// ── LIJNGRAFIEKEN (HP of Nm vs RPM) ──────────────────────────────────────────
+function tekenLijnChart(){
+  const canvas = document.getElementById('lijn-chart');
+  if(!canvas) return;
+  if(lineChartInstance){lineChartInstance.destroy();lineChartInstance=null;}
+
+  const isHp = lijnModus==='hp';
+  const yLabel = isHp ? 'HP' : 'Nm';
+
+  // Bouw datasets — alleen runs mét curvedata
+  const datasets = geselecteerd
+    .filter(g=>(g.run.curveData||[]).length>0)
+    .map(g=>{
+      const r = g.run;
+      const s = g.sessie;
+      const tnr = testNr(r.bestandsnaam);
+      const punten = (r.curveData||[]).map(p=>({x:p.rpm, y: isHp ? p.hp : p.nm}));
+      return {
+        label: `${s.motorNummer}${tnr?' #'+tnr:''}`,
+        data: punten,
+        borderColor: g.kleur,
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: false,
+      };
+    });
+
+  if(datasets.length===0){
+    // Geen curvedata — toon lege state in canvas
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#9ca3af';
+    ctx.font='14px Inter,system-ui,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('Geen curvepunten beschikbaar — herlaad de SPX-bestanden',canvas.width/2,canvas.height/2);
+    return;
+  }
+
+  // Bereken x-bereik
+  const alleRpm = datasets.flatMap(d=>d.data.map(p=>p.x));
+  const minRpm = Math.floor(Math.min(...alleRpm)/500)*500;
+  const maxRpm = Math.ceil(Math.max(...alleRpm)/500)*500;
+
+  lineChartInstance = new Chart(canvas, {
+    type: 'line',
+    data: {datasets},
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {mode:'index', intersect:false},
+      plugins: {
+        legend: {
+          position:'top',
+          labels:{font:{family:'Inter,system-ui,sans-serif',size:12},padding:16,boxWidth:20,boxHeight:3,usePointStyle:true,pointStyle:'line'}
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y} ${yLabel}`,
+            title: ctx=>`${Number(ctx[0].parsed.x).toLocaleString()} RPM`
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          min: minRpm,
+          max: maxRpm,
+          title: {display:true, text:'Motor RPM', font:{family:'Inter,system-ui,sans-serif',size:12}, color:'#6b7280'},
+          ticks: {
+            font:{family:'Inter,system-ui,sans-serif'},
+            callback: v=>Number(v).toLocaleString(),
+            maxTicksLimit: 10
+          },
+          grid: {color:'#f3f4f6'}
+        },
+        y: {
+          title: {display:true, text:yLabel, font:{family:'Inter,system-ui,sans-serif',size:12}, color:'#6b7280'},
+          ticks: {font:{family:'Inter,system-ui,sans-serif'}},
+          grid: {color:'#f3f4f6'}
+        }
+      }
+    }
+  });
+}
+
+// ── STAAFGRAFIEK (piekwaarden) ────────────────────────────────────────────────
+function tekenBarChart(){
   const canvas = document.getElementById('verg-chart');
   if(!canvas) return;
-  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+  if(barChartInstance){barChartInstance.destroy();barChartInstance=null;}
 
   const labels = ['Vermogen (HP)','Koppel (Nm)','Max RPM / 100'];
-  const datasets = geselecteerd.map((g,i)=>{
+  const datasets = geselecteerd.map(g=>{
     const r = g.run;
     const s = g.sessie;
     const tnr = testNr(r.bestandsnaam);
@@ -471,19 +597,19 @@ function tekenChart(){
     };
   });
 
-  chartInstance = new Chart(canvas, {
+  barChartInstance = new Chart(canvas, {
     type: 'bar',
     data: {labels, datasets},
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {position:'top', labels:{font:{family:'Inter',size:12},padding:16}},
+        legend: {position:'top', labels:{font:{family:'Inter,system-ui,sans-serif',size:12},padding:16}},
         tooltip: {callbacks:{label: ctx=>`${ctx.dataset.label}: ${ctx.raw}${ctx.dataIndex===2?' × 100':ctx.dataIndex===0?' HP':' Nm'}`}}
       },
       scales: {
-        x: {grid:{display:false},ticks:{font:{family:'Inter'}}},
-        y: {beginAtZero:true,ticks:{font:{family:'Inter'}}}
+        x: {grid:{display:false},ticks:{font:{family:'Inter,system-ui,sans-serif'}}},
+        y: {beginAtZero:true,ticks:{font:{family:'Inter,system-ui,sans-serif'}}}
       }
     }
   });
