@@ -299,6 +299,7 @@ const EMPTY_RUN = () => ({
 let sb = null;
 let sessies = [], view = 'lijst', selected = null, pendingRuns = [EMPTY_RUN()];
 let zoek = '', filterType = 'Alle', filterUitkomst = 'Alle';
+let lijstOpen = false;
 let cameFromKlanten = false;
 let cameFromMotoren = false;
 let sessionOriginMotorNr = '';
@@ -873,7 +874,7 @@ function renderLijst(){
     </div>
     <button onclick="startSessie()" style="background:#374151;color:#fff;border:none;border-radius:12px;padding:0 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">+ Start sessie</button>
   </div>
-  <div class="filters">
+  ${lijstOpen?`<div class="filters">
     <input class="inp" id="zinput" value="${esc(zoek)}" placeholder="🔍  Motor, klant, carbu..." style="flex:1 1 200px;width:auto">
     <select class="sel" id="ftype" style="width:150px">
       <option value="Alle"${filterType==='Alle'?' selected':''}>Alle testtypen</option>
@@ -883,10 +884,16 @@ function renderLijst(){
       <option value="Alle"${filterUitkomst==='Alle'?' selected':''}>Alle uitkomsten</option>
       ${['Geslaagd','Afgekeurd','Lopend'].map(u=>`<option${filterUitkomst===u?' selected':''}>${u}</option>`).join('')}
     </select>
+  </div>`:'<input id="zinput" style="display:none">'}`;
+  h+=`<div style="margin-bottom:12px">
+    <button onclick="lijstOpen=!lijstOpen;saveViewState();renderLijst()" style="width:100%;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <span>📋 Bekijk eerdere tests${filtered.length?' ('+filtered.length+')':''}</span>
+      <span style="font-size:12px;color:#9ca3af;transition:transform .2s;display:inline-block;transform:rotate(${lijstOpen?'180':'0'}deg)">▼</span>
+    </button>
   </div>`;
-  if(!filtered.length){
+  if(lijstOpen && !filtered.length){
     h+=`<div class="empty-state"><div style="font-size:40px;margin-bottom:8px">🔍</div><div style="font-weight:600">Geen sessies gevonden</div><div style="font-size:13px;margin-top:4px">Importeer SPX-bestanden of voeg een sessie toe.</div></div>`;
-  } else {
+  } else if(lijstOpen) {
     filtered.forEach(s=>{
       const best=bestRun(s.runs), eerste=s.runs?.[0];
       const motorInfo=[s.motorMerk,s.motorType,s.motorNaam].filter(Boolean).join(' · ');
@@ -1388,7 +1395,8 @@ function saveViewState() {
       selectedId: selected?.id || null,
       cameFromKlanten,
       cameFromMotoren,
-      sessionOriginMotorNr
+      sessionOriginMotorNr,
+      lijstOpen
     }));
   } catch(e) {}
 }
@@ -1400,6 +1408,7 @@ function restoreViewState() {
     if (s.cameFromKlanten) cameFromKlanten = true;
     if (s.cameFromMotoren) cameFromMotoren = true;
     if (s.sessionOriginMotorNr) sessionOriginMotorNr = s.sessionOriginMotorNr;
+    if (s.lijstOpen !== undefined) lijstOpen = s.lijstOpen;
     // Als geselecteerde sessie niet meer bestaat, val terug naar overzicht
     if (view === 'detail' && !selected) view = 'lijst';
     if (view === 'motoren' || view === 'motor-detail' || view === 'motor-nieuw') view = 'lijst';
