@@ -184,6 +184,37 @@ let openeSessies = new Set();
 let lineChartInstance = null;
 let lijnModus = 'hp'; // 'hp' of 'nm'
 
+function saveAnalyseState(){
+  try{
+    localStorage.setItem('analyse_state', JSON.stringify({
+      geselecteerd: geselecteerd.map(g=>({runId:g.run.id, sessieId:g.sessie.id, kleur:g.kleur})),
+      openeSessies: [...openeSessies],
+      zoek,
+      lijnModus
+    }));
+  }catch(e){}
+}
+
+function restoreAnalyseState(){
+  try{
+    const raw = localStorage.getItem('analyse_state');
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    zoek = s.zoek||'';
+    lijnModus = s.lijnModus||'hp';
+    if(s.openeSessies) s.openeSessies.forEach(id=>openeSessies.add(id));
+    if(s.geselecteerd){
+      geselecteerd = s.geselecteerd.flatMap(({runId,sessieId,kleur})=>{
+        const sessie = sessies.find(s=>s.id===sessieId);
+        if(!sessie) return [];
+        const run = (sessie.runs||[]).find(r=>r.id===runId);
+        if(!run) return [];
+        return [{run, sessie, kleur}];
+      });
+    }
+  }catch(e){}
+}
+
 const KLEUREN = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
 
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -256,27 +287,32 @@ function toggleRun(sessieId, runId){
     const kleur = KLEUREN[geselecteerd.length];
     geselecteerd = [...geselecteerd, {run, sessie, kleur}];
   }
+  saveAnalyseState();
   render();
 }
 
 function verwijderUitSelectie(runId){
   geselecteerd = geselecteerd.filter(g=>g.run.id!==runId);
+  saveAnalyseState();
   render();
 }
 
 function wisSelectie(){
   geselecteerd = [];
+  saveAnalyseState();
   render();
 }
 
 function toggleSessieOpen(sessieId){
   if(openeSessies.has(sessieId)) openeSessies.delete(sessieId);
   else openeSessies.add(sessieId);
+  saveAnalyseState();
   render();
 }
 
 function setLijnModus(m){
   lijnModus = m;
+  saveAnalyseState();
   tekenLijnChart();
   // Update toggle buttons
   document.querySelectorAll('.toggle-btn').forEach(b=>{
@@ -659,6 +695,7 @@ async function laadEnToon(){
   document.getElementById('main').innerHTML='<div class="loading">⏳ Laden...</div>';
   document.getElementById('db-status').innerHTML='<span class="db-dot" style="background:#10b981"></span>Supabase';
   sessies = await dbLoad();
+  restoreAnalyseState();
   render();
 }
 
