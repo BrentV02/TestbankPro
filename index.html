@@ -292,6 +292,8 @@ let zoek = '', filterType = 'Alle', filterUitkomst = 'Alle';
 let cameFromKlanten = false;
 let cameFromMotoren = false;
 let sessionOriginMotorNr = '';
+let sessieStartTijd = null;
+let sessieTimerInterval = null;
 
 // ── UUID ──────────────────────────────────────────────────────────────────────
 function uuid() {
@@ -308,7 +310,8 @@ function toRow(s) {
            opmerkingen: s.opmerkingen||'', runs: s.runs||[],
            motor_merk: s.motorMerk||'', motor_type: s.motorType||'', motor_naam: s.motorNaam||'',
            carbu_van_baan_hoog: s.carbuVanBaanHoog||'', carbu_van_baan_laag: s.carbuVanBaanLaag||'',
-           carbu_test_hoog: s.carbuTestHoog||'', carbu_test_laag: s.carbuTestLaag||'' };
+           carbu_test_hoog: s.carbuTestHoog||'', carbu_test_laag: s.carbuTestLaag||'',
+           duur: s.duur||null };
 }
 function fromRow(r) {
   return { id: r.id, motorNummer: r.motor_nummer, klant: r.klant||'', carbu: r.carbu||'',
@@ -316,7 +319,8 @@ function fromRow(r) {
            opmerkingen: r.opmerkingen||'', runs: r.runs||[],
            motorMerk: r.motor_merk||'', motorType: r.motor_type||'', motorNaam: r.motor_naam||'',
            carbuVanBaanHoog: r.carbu_van_baan_hoog||'', carbuVanBaanLaag: r.carbu_van_baan_laag||'',
-           carbuTestHoog: r.carbu_test_hoog||'', carbuTestLaag: r.carbu_test_laag||'' };
+           carbuTestHoog: r.carbu_test_hoog||'', carbuTestLaag: r.carbu_test_laag||'',
+           duur: r.duur||null };
 }
 
 async function dbLoad() {
@@ -906,6 +910,7 @@ function renderNieuw(){
     <div class="head-row" style="margin-bottom:6px">
       <button class="btn-back" data-action="${cameFromMotoren?'naar-motor':'naar-lijst'}">←</button>
       <h2 class="page-title">${isImport?`📂 Importeren (${pendingRuns.length} run${pendingRuns.length>1?'s':''})` :'Nieuwe sessie'}</h2>
+      ${sessieStartTijd?`<div id="sessie-timer" style="font-size:20px;font-weight:800;color:#1d4ed8;font-variant-numeric:tabular-nums;letter-spacing:1px;margin-left:auto">${fmtTimer(Math.floor((Date.now()-sessieStartTijd)/1000))}</div>`:''}
     </div>
     ${isImport?'<p class="import-note">Vul de sessiegegevens in. De runs zijn automatisch ingelezen — controleer en pas aan waar nodig.</p>':''}
     <div class="form-section">
@@ -1063,6 +1068,7 @@ function renderDetail(){
             ${selected.motorType?`<div class="meta-row"><span class="meta-row-lbl">Motor type</span><span class="meta-row-val">${esc(selected.motorType)}</span></div>`:''}
             ${selected.motorNaam?`<div class="meta-row"><span class="meta-row-lbl">Motor naam</span><span class="meta-row-val">${esc(selected.motorNaam)}</span></div>`:''}
             ${effectiefCarbu(selected)?`<div class="meta-row"><span class="meta-row-lbl">Carburateur</span><span class="meta-row-val">${esc(effectiefCarbu(selected))}</span></div>`:''}
+            ${selected.duur?`<div class="meta-row"><span class="meta-row-lbl">Sessieduur</span><span class="meta-row-val">⏱ ${fmtTimer(selected.duur)}</span></div>`:''}
           </div>`:''}
           <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;padding-top:2px;margin-left:auto">
             <select class="inline-select inline-select-type is-${(selected.testType||'Test').toLowerCase()}" onchange="sessieVeldBijwerken('testType',this.value)">
@@ -1373,7 +1379,15 @@ function restoreViewState() {
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 function navigeer(newView,obj){view=newView;if(obj) selected=obj;saveViewState();render();window.scrollTo(0,0);}
 function nieuweSessie(){pendingRuns=[EMPTY_RUN()];ssPendingSave([]);navigeer('nieuw');}
-function startSessie(){pendingRuns=[];ssPendingSave([]);navigeer('nieuw');}
+function fmtTimer(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60,p=n=>String(n).padStart(2,'0');return h>0?`${p(h)}:${p(m)}:${p(s)}`:`${p(m)}:${p(s)}`;}
+function timerTick(){const el=document.getElementById('sessie-timer');if(el&&sessieStartTijd)el.textContent=fmtTimer(Math.floor((Date.now()-sessieStartTijd)/1000));}
+function stopSessieTimer(){clearInterval(sessieTimerInterval);sessieTimerInterval=null;}
+function startSessie(){
+  stopSessieTimer();
+  sessieStartTijd=Date.now();
+  pendingRuns=[];ssPendingSave([]);navigeer('nieuw');
+  sessieTimerInterval=setInterval(timerTick,1000);
+}
 async function addSpxToForm(files){
   // Kopieer FileList naar array VOOR DOM-wijzigingen — anders verliest de FileList bestanden
   const fileArr=Array.from(files||[]);
@@ -1549,8 +1563,10 @@ async function opslaan(){
   const motorNaam=document.getElementById('sf-mn2').value.trim();
   const g=id=>(document.getElementById(id)?.value||'').trim();
   dbMotorSave(mn,{klant,motorMerk,motorType,motorNaam});
+  const duur=sessieStartTijd?Math.round((Date.now()-sessieStartTijd)/1000):null;
+  stopSessieTimer(); sessieStartTijd=null;
   const nieuw={
-    id:uuid(), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam,
+    id:uuid(), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam, duur,
     testType:document.getElementById('sf-tt').value,
     uitkomst:document.getElementById('sf-uk').value,
     opmerkingen:document.getElementById('sf-op').value,
@@ -1821,11 +1837,13 @@ document.getElementById('main').addEventListener('click', e=>{
   const {action,id,runId}=el.dataset;
   if(action==='bekijk'){const s=sessies.find(x=>x.id==id);if(s) navigeer('detail',s);}
   else if(action==='naar-lijst') {
+    stopSessieTimer(); sessieStartTijd=null;
     if(cameFromKlanten){cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
     else if(cameFromMotoren){cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
     else navigeer('lijst');
   }
   else if(action==='naar-motor') {
+    stopSessieTimer(); sessieStartTijd=null;
     if(cameFromKlanten){cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
     else if(cameFromMotoren){cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
     else navigeer('lijst');
