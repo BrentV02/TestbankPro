@@ -100,7 +100,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .fs-zoom-btn:active{background:#475569}
 .fs-chart-wrap{flex:1;position:relative;min-height:0;padding:4px 8px}
 .fs-chart-wrap canvas{touch-action:none}
-#lijn-hover-panel-fs{position:absolute;top:6px;right:6px;margin:0;max-width:220px;background:rgba(15,23,42,0.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px!important;z-index:10}
+#lijn-hover-panel-fs{position:absolute;bottom:32px;left:52px;margin:0;max-width:220px;background:rgba(15,23,42,0.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px!important;z-index:10}
 #lijn-hover-panel-fs .lijn-hover-rpm{font-size:10px;margin-bottom:4px;letter-spacing:.3px}
 #lijn-hover-panel-fs .lijn-hover-rows{gap:3px 10px}
 #lijn-hover-panel-fs .lijn-hover-row{font-size:10px;gap:5px}
@@ -847,7 +847,7 @@ function renderVergelijking(){
 
 // ── LIJNGRAFIEKEN (HP of Nm vs RPM) ──────────────────────────────────────────
 
-// Lineaire interpolatie: geef de y-waarde op een bepaald RPM punt
+// Lineaire interpolatie
 function lerpY(punten, rpm){
   if(!punten.length||rpm<punten[0].x||rpm>punten[punten.length-1].x) return null;
   let lo=0, hi=punten.length-1;
@@ -855,6 +855,19 @@ function lerpY(punten, rpm){
   const {x:x0,y:y0}=punten[lo], {x:x1,y:y1}=punten[hi];
   if(x1===x0) return y0;
   return Math.round((y0+(rpm-x0)/(x1-x0)*(y1-y0))*10)/10;
+}
+
+// Moving-average smoothing — window van 7 punten (= 350 RPM) om ruis weg te filteren
+function smoothArr(arr, win=7){
+  const h=Math.floor(win/2);
+  return arr.map((v,i)=>{
+    if(v===null) return null;
+    let s=0,n=0;
+    for(let j=Math.max(0,i-h);j<=Math.min(arr.length-1,i+h);j++){
+      if(arr[j]!==null){s+=arr[j];n++;}
+    }
+    return n?Math.round(s/n*10)/10:null;
+  });
 }
 
 function tekenLijnChart(){
@@ -918,12 +931,13 @@ function tekenLijnChart(){
     const naam = g.sessie.motorNaam || g.sessie.klant || g.sessie.motorNummer;
     return {
       label: `${naam}${tnr?' #'+tnr:''}`,
-      data: raster.map(rpm=>lerpY(pts,rpm)),
+      data: smoothArr(raster.map(rpm=>lerpY(pts,rpm))),
       borderColor: g.kleur,
       backgroundColor: 'transparent',
       borderWidth: 2.5,
       pointRadius: 0,
       tension: 0.4,
+      cubicInterpolationMode: 'monotone',
       fill: false,
       spanGaps: false,
     };
