@@ -552,8 +552,9 @@ function tekenLijnChart(){
   // Interpoleer elke run op het raster → null buiten het RPM-bereik van die run
   const datasets = runPunten.map(({g,pts})=>{
     const tnr = testNr(g.run.bestandsnaam);
+    const naam = g.sessie.motorNaam || g.sessie.klant || g.sessie.motorNummer;
     return {
-      label: `${g.sessie.motorNummer}${tnr?' #'+tnr:''}`,
+      label: `${naam}${tnr?' #'+tnr:''}`,
       data: raster.map(rpm=>lerpY(pts,rpm)),
       borderColor: g.kleur,
       backgroundColor: 'transparent',
