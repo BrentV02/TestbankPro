@@ -347,6 +347,38 @@ async function dbLoad(){
   return data.map(fromRow);
 }
 
+async function dbLoadAnalyses(){
+  if(!sb) return;
+  const {data,error} = await sb.from('analyses').select('*').order('bijgewerkt',{ascending:false});
+  if(error){console.error('Analyses laden mislukt:',error);return;}
+  analyseOpgeslagen = data.map(r=>({
+    id:r.id, naam:r.naam||'',
+    geselecteerd:r.geselecteerd||[],
+    lijnModus:r.lijn_modus||'hp',
+    vergelijkingOpen:r.vergelijking_open||false,
+    aangemaakt:r.aangemaakt, bijgewerkt:r.bijgewerkt
+  }));
+  saveAnalyseOpgeslagen();
+}
+
+async function dbSaveAnalyse(a){
+  if(!sb) return;
+  const {error} = await sb.from('analyses').upsert({
+    id:a.id, naam:a.naam,
+    geselecteerd:a.geselecteerd,
+    lijn_modus:a.lijnModus||'hp',
+    vergelijking_open:a.vergelijkingOpen||false,
+    aangemaakt:a.aangemaakt, bijgewerkt:a.bijgewerkt
+  });
+  if(error) console.error('Analyse opslaan mislukt:',error);
+}
+
+async function dbDeleteAnalyse(id){
+  if(!sb) return;
+  const {error} = await sb.from('analyses').delete().eq('id',id);
+  if(error) console.error('Analyse verwijderen mislukt:',error);
+}
+
 // ── NAVIGATIE ─────────────────────────────────────────────────────────────────
 function toggleNav(){document.getElementById('nav-dropdown').classList.toggle('open');}
 document.addEventListener('click',e=>{if(!e.target.closest('.nav-wrap')) document.getElementById('nav-dropdown')?.classList.remove('open');});
@@ -985,14 +1017,18 @@ function startAnalyse(){
     geselecteerd: geselecteerd.map(g=>({runId:g.run.id, sessieId:g.sessie.id, kleur:g.kleur})),
     lijnModus, vergelijkingOpen: true, bijgewerkt: nu
   };
+  let opTeSlaan;
   if(huidigeAnalyseId){
     analyseOpgeslagen = analyseOpgeslagen.map(a=>a.id===huidigeAnalyseId ? {...a,...data} : a);
+    opTeSlaan = analyseOpgeslagen.find(a=>a.id===huidigeAnalyseId);
   } else {
     huidigeAnalyseId = crypto.randomUUID();
-    analyseOpgeslagen = [{id:huidigeAnalyseId, ...data, aangemaakt:nu}, ...analyseOpgeslagen];
+    opTeSlaan = {id:huidigeAnalyseId, ...data, aangemaakt:nu};
+    analyseOpgeslagen = [opTeSlaan, ...analyseOpgeslagen];
   }
   saveAnalyseOpgeslagen();
   saveAnalyseState();
+  dbSaveAnalyse(opTeSlaan);
   render();
   setTimeout(()=>document.getElementById('vergelijking-sectie')?.scrollIntoView({behavior:'smooth',block:'start'}), 50);
 }
@@ -1048,6 +1084,7 @@ function verwijderAnalyse(id){
     onOk: ()=>{
       analyseOpgeslagen = analyseOpgeslagen.filter(a=>a.id!==id);
       saveAnalyseOpgeslagen();
+      dbDeleteAnalyse(id);
       render();
     }
   });
@@ -1066,8 +1103,10 @@ async function laadEnToon(){
   document.getElementById('main').innerHTML='<div class="loading">⏳ Laden...</div>';
   document.getElementById('db-status').innerHTML='<span class="db-dot" style="background:#10b981"></span>Supabase';
   sessies = await dbLoad();
-  loadAnalyseOpgeslagen();
+  loadAnalyseOpgeslagen(); // localStorage als snelle eerste weergave
   restoreAnalyseState();
+  render();
+  await dbLoadAnalyses(); // overschrijf met Supabase data
   render();
 }
 
