@@ -100,7 +100,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .fs-zoom-btn:active{background:#475569}
 .fs-chart-wrap{flex:1;position:relative;min-height:0;padding:4px 8px}
 .fs-chart-wrap canvas{touch-action:none}
-#lijn-hover-panel-fs{margin:0 12px 10px;flex-shrink:0}
+#lijn-hover-panel-fs{position:absolute;bottom:10px;left:10px;margin:0;max-width:calc(100% - 20px);background:rgba(15,23,42,0.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.1);z-index:10}
 /* Hover datapanel onder de grafiek */
 .lijn-hover-panel{background:#1e293b;border-radius:10px;padding:11px 16px;margin-top:10px;display:none}
 .lijn-hover-rpm{font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase}
@@ -1161,8 +1161,10 @@ function openVollescherm(){
       </div>
       <button class="fs-sluit-btn" onclick="sluitVollescherm()">✕ Sluiten</button>
     </div>
-    <div class="fs-chart-wrap"><canvas id="lijn-chart-fs"></canvas></div>
-    <div class="lijn-hover-panel" id="lijn-hover-panel-fs"></div>`;
+    <div class="fs-chart-wrap">
+      <canvas id="lijn-chart-fs"></canvas>
+      <div class="lijn-hover-panel" id="lijn-hover-panel-fs"></div>
+    </div>`;
   document.body.appendChild(el);
 
   const teken = () => {
