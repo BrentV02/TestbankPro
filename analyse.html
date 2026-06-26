@@ -100,7 +100,15 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .fs-zoom-btn:active{background:#475569}
 .fs-chart-wrap{flex:1;position:relative;min-height:0;padding:4px 8px}
 .fs-chart-wrap canvas{touch-action:none}
-#lijn-hover-panel-fs{position:absolute;bottom:10px;left:10px;margin:0;max-width:calc(100% - 20px);background:rgba(15,23,42,0.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.1);z-index:10}
+#lijn-hover-panel-fs{position:absolute;top:6px;right:6px;margin:0;max-width:220px;background:rgba(15,23,42,0.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px!important;z-index:10}
+#lijn-hover-panel-fs .lijn-hover-rpm{font-size:10px;margin-bottom:4px;letter-spacing:.3px}
+#lijn-hover-panel-fs .lijn-hover-rows{gap:3px 10px}
+#lijn-hover-panel-fs .lijn-hover-row{font-size:10px;gap:5px}
+#lijn-hover-panel-fs .lijn-hover-dash{width:10px;height:2px}
+#lijn-hover-panel-fs .lijn-hover-lbl{font-size:10px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#lijn-hover-panel-fs .lijn-hover-val{font-size:10px;font-weight:700}
+#lijn-hover-panel-fs .lijn-hover-diff{font-size:9px}
+#lijn-hover-panel-fs .lijn-hover-best{font-size:9px}
 /* Hover datapanel onder de grafiek */
 .lijn-hover-panel{background:#1e293b;border-radius:10px;padding:11px 16px;margin-top:10px;display:none}
 .lijn-hover-rpm{font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase}
@@ -916,7 +924,6 @@ function tekenLijnChart(){
       borderWidth: 2.5,
       pointRadius: 0,
       tension: 0.4,
-      cubicInterpolationMode: 'monotone',
       fill: false,
       spanGaps: false,
     };
