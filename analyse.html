@@ -103,6 +103,11 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 /* Toggle knop voor HP/Nm */
 .toggle-wrap{display:flex;gap:6px;flex-shrink:0}
 .toggle-btn{border:1.5px solid #e5e7eb;border-radius:7px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:#f9fafb;color:#6b7280;transition:all .15s}
+/* Kleur picker in chip */
+.kleur-picker-label{position:relative;cursor:pointer;flex-shrink:0;display:flex;align-items:center}
+.kleur-picker-input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.kleur-picker-swatch{width:14px;height:14px;border-radius:4px;border:2px solid rgba(255,255,255,0.5);transition:border-color .15s;flex-shrink:0}
+.kleur-picker-label:hover .kleur-picker-swatch{border-color:#fff}
 .toggle-btn.actief{background:#2563eb;color:#fff;border-color:#2563eb}
 @media(max-width:600px){
   #header{height:auto;min-height:52px;padding:8px 12px;gap:8px}
@@ -183,14 +188,14 @@ let zoek = '';
 let openeSessies = new Set();
 let lineChartInstance = null;
 let lijnModus = 'hp'; // 'hp' of 'nm'
+let vergelijkingOpen = false;
 
 function saveAnalyseState(){
   try{
     localStorage.setItem('analyse_state', JSON.stringify({
       geselecteerd: geselecteerd.map(g=>({runId:g.run.id, sessieId:g.sessie.id, kleur:g.kleur})),
       openeSessies: [...openeSessies],
-      zoek,
-      lijnModus
+      zoek, lijnModus, vergelijkingOpen
     }));
   }catch(e){}
 }
@@ -202,10 +207,11 @@ function restoreAnalyseState(){
     const s = JSON.parse(raw);
     zoek = s.zoek||'';
     lijnModus = s.lijnModus||'hp';
+    vergelijkingOpen = s.vergelijkingOpen||false;
     if(s.openeSessies) s.openeSessies.forEach(id=>openeSessies.add(id));
     if(s.geselecteerd){
       geselecteerd = s.geselecteerd.flatMap(({runId,sessieId,kleur})=>{
-        const sessie = sessies.find(s=>s.id===sessieId);
+        const sessie = sessies.find(ss=>ss.id===sessieId);
         if(!sessie) return [];
         const run = (sessie.runs||[]).find(r=>r.id===runId);
         if(!run) return [];
@@ -213,6 +219,12 @@ function restoreAnalyseState(){
       });
     }
   }catch(e){}
+}
+
+function setKleur(runId, kleur){
+  geselecteerd = geselecteerd.map(g=>g.run.id===runId ? {...g, kleur} : g);
+  saveAnalyseState();
+  if(vergelijkingOpen) setTimeout(()=>tekenLijnChart(), 0);
 }
 
 const KLEUREN = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
@@ -336,8 +348,11 @@ function render(){
   if(geselecteerd.length>0){
     const chips = geselecteerd.map((g)=>`
       <span class="selectie-chip" style="background:${g.kleur}">
-        <span class="kleur-dot" style="background:rgba(255,255,255,.4)"></span>
-        ${esc(g.sessie.motorNummer)}${testNr(g.run.bestandsnaam)?` #${testNr(g.run.bestandsnaam)}`:''}
+        <label class="kleur-picker-label" title="Klik om kleur te wijzigen">
+          <input type="color" class="kleur-picker-input" value="${g.kleur}" oninput="setKleur('${g.run.id}',this.value)">
+          <span class="kleur-picker-swatch" style="background:${g.kleur}"></span>
+        </label>
+        ${esc(g.sessie.motorNaam||g.sessie.klant||g.sessie.motorNummer)}${testNr(g.run.bestandsnaam)?` #${testNr(g.run.bestandsnaam)}`:''}
         <button onclick="verwijderUitSelectie('${g.run.id}')">✕</button>
       </span>`).join('');
     selectieHtml = `
@@ -345,7 +360,7 @@ function render(){
         <span class="selectie-label">${geselecteerd.length} run${geselecteerd.length!==1?'s':''} geselecteerd</span>
         ${chips}
         <button class="wis-btn" onclick="wisSelectie()">Wis alles</button>
-        ${geselecteerd.length>=2?`<button class="vergelijk-btn" onclick="scrollNaarVergelijking()">📈 Vergelijk</button>`:''}
+        ${geselecteerd.length>=2?`<button class="vergelijk-btn" onclick="openVergelijking()">📈 Vergelijk</button>`:''}
       </div>`;
   }
 
@@ -402,7 +417,8 @@ function render(){
           </div>`;
       }).join('');
 
-  const vergelijkingHtml = geselecteerd.length>=2 ? renderVergelijking() : '';
+  if(geselecteerd.length<2) vergelijkingOpen = false;
+  const vergelijkingHtml = vergelijkingOpen && geselecteerd.length>=2 ? renderVergelijking() : '';
 
   main.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
@@ -690,6 +706,13 @@ function tekenLijnChart(){
   });
 }
 
+
+function openVergelijking(){
+  vergelijkingOpen = true;
+  saveAnalyseState();
+  render();
+  setTimeout(()=>document.getElementById('vergelijking-sectie')?.scrollIntoView({behavior:'smooth',block:'start'}), 50);
+}
 
 function scrollNaarVergelijking(){
   document.getElementById('vergelijking-sectie')?.scrollIntoView({behavior:'smooth',block:'start'});
