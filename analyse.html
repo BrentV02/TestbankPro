@@ -653,9 +653,9 @@ function renderEditorView(){
     if(nieuw){ nieuw.focus(); nieuw.setSelectionRange(pos, pos); }
     if(zoek.trim()){
       setTimeout(()=>{
-        const inp = document.getElementById('zoek-inp');
-        if(inp){
-          const top = inp.getBoundingClientRect().top + window.scrollY - 66;
+        const anker = document.querySelector('.selectie-balk') || document.getElementById('zoek-inp');
+        if(anker){
+          const top = anker.getBoundingClientRect().top + window.scrollY - 66;
           window.scrollTo({top: Math.max(0, top), behavior:'smooth'});
         }
       }, 30);
