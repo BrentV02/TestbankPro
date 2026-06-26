@@ -93,6 +93,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .fs-titel{color:#94a3b8;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
 .fs-sluit-btn{background:#374151;border:none;color:#fff;border-radius:8px;padding:6px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
 .fs-sluit-btn:hover{background:#4b5563}
+.fs-zoom-groep{display:flex;align-items:center;gap:6px}
+.fs-zoom-btn{background:#1e293b;border:1px solid rgba(255,255,255,.15);color:#e2e8f0;border-radius:8px;padding:6px 12px;font-size:16px;line-height:1;font-weight:700;cursor:pointer;font-family:inherit;user-select:none}
+.fs-zoom-btn:hover{background:#334155;color:#fff}
+.fs-zoom-btn:active{background:#475569}
 .fs-chart-wrap{flex:1;position:relative;min-height:0;padding:4px 8px}
 .fs-chart-wrap canvas{touch-action:none}
 #lijn-hover-panel-fs{margin:0 12px 10px;flex-shrink:0}
@@ -1136,6 +1140,10 @@ function tekenFsChart(canvasEl){
   addTouchCrosshair(canvasEl, fsChartInstance, raster);
 }
 
+function fsZoomIn()   { if(fsChartInstance) try{fsChartInstance.zoom({x:1.25});}catch(_){} }
+function fsZoomUit()  { if(fsChartInstance) try{fsChartInstance.zoom({x:0.8});}catch(_){} }
+function fsZoomReset(){ if(fsChartInstance) try{fsChartInstance.resetZoom();}catch(_){} }
+
 function openVollescherm(){
   if(!_chartRaster.length) return;
   if(document.getElementById('grafiek-fs')) return;
@@ -1144,7 +1152,12 @@ function openVollescherm(){
   el.innerHTML = `
     <div class="fs-header">
       <span class="fs-titel">📈 ${_chartYLabel} vs RPM</span>
-      <button class="fs-sluit-btn" onclick="sluitVollescherm()">✕ Fullscreen sluiten</button>
+      <div class="fs-zoom-groep">
+        <button class="fs-zoom-btn" onclick="fsZoomUit()" title="Uitzoomen">🔍−</button>
+        <button class="fs-zoom-btn" onclick="fsZoomIn()"  title="Inzoomen">🔍+</button>
+        <button class="fs-zoom-btn" onclick="fsZoomReset()" title="Reset zoom" style="font-size:13px;padding:6px 10px">↺</button>
+      </div>
+      <button class="fs-sluit-btn" onclick="sluitVollescherm()">✕ Sluiten</button>
     </div>
     <div class="fs-chart-wrap"><canvas id="lijn-chart-fs"></canvas></div>
     <div class="lijn-hover-panel" id="lijn-hover-panel-fs"></div>`;
