@@ -79,7 +79,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .verg-titel{font-size:16px;font-weight:800;margin-bottom:16px;color:#111827;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .chart-wrap{position:relative;margin-bottom:8px}
 .chart-wrap-lijn{height:360px}
-.chart-wrap-staaf{height:280px}
+/* Hover datapanel onder de grafiek */
+.lijn-hover-panel{background:#1e293b;border-radius:10px;padding:11px 16px;margin-top:10px;display:none}
+.lijn-hover-rpm{font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase}
+.lijn-hover-rows{display:flex;flex-wrap:wrap;gap:6px 20px}
+.lijn-hover-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.lijn-hover-dash{width:14px;height:3px;border-radius:2px;flex-shrink:0}
+.lijn-hover-lbl{color:#94a3b8;font-size:12px}
+.lijn-hover-val{font-weight:700;color:#f1f5f9}
 /* Vergelijkingstabel */
 .vtbl{width:100%;border-collapse:collapse;font-size:13px}
 .vtbl th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;background:#f9fafb;border-bottom:1.5px solid #e5e7eb}
@@ -173,7 +180,6 @@ let geselecteerd = []; // [{run, sessie, kleur}]
 let zoek = '';
 let openeSessies = new Set();
 let lineChartInstance = null;
-let barChartInstance = null;
 let lijnModus = 'hp'; // 'hp' of 'nm'
 
 const KLEUREN = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
@@ -374,7 +380,7 @@ function render(){
 
   document.getElementById('zoek-inp')?.addEventListener('input',e=>{zoek=e.target.value;render();});
 
-  if(geselecteerd.length>=2) setTimeout(()=>{tekenLijnChart();tekenBarChart();},0);
+  if(geselecteerd.length>=2) setTimeout(()=>tekenLijnChart(),0);
 }
 
 // ── VERGELIJKING ──────────────────────────────────────────────────────────────
@@ -472,11 +478,8 @@ function renderVergelijking(){
           </div>
         </div>
         <div class="chart-wrap chart-wrap-lijn"><canvas id="lijn-chart"></canvas></div>
+        <div class="lijn-hover-panel" id="lijn-hover-panel"></div>
         ${geenCurveMsg}
-      </div>
-      <div class="verg-card">
-        <div class="verg-titel">📊 Piekwaarden</div>
-        <div class="chart-wrap chart-wrap-staaf"><canvas id="verg-chart"></canvas></div>
       </div>
       <div class="verg-card">
         <div class="verg-titel">📋 Vergelijkingstabel</div>
@@ -534,13 +537,12 @@ function tekenLijnChart(){
     });
 
   if(datasets.length===0){
-    // Geen curvedata — toon lege state in canvas
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle='#9ca3af';
-    ctx.font='14px Inter,system-ui,sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('Geen curvepunten beschikbaar — herlaad de SPX-bestanden',canvas.width/2,canvas.height/2);
+    const ctx2 = canvas.getContext('2d');
+    ctx2.clearRect(0,0,canvas.width,canvas.height);
+    ctx2.fillStyle='#9ca3af';
+    ctx2.font='14px Inter,system-ui,sans-serif';
+    ctx2.textAlign='center';
+    ctx2.fillText('Geen curvepunten beschikbaar — herlaad de SPX-bestanden',canvas.width/2,canvas.height/2);
     return;
   }
 
@@ -549,9 +551,30 @@ function tekenLijnChart(){
   const minRpm = Math.floor(Math.min(...alleRpm)/500)*500;
   const maxRpm = Math.ceil(Math.max(...alleRpm)/500)*500;
 
+  // Crosshair plugin — tekent een verticale stippellijn bij hover
+  const crosshairPlugin = {
+    id:'crosshair',
+    afterDraw(chart){
+      if(!chart.tooltip?._active?.length) return;
+      const ctx2 = chart.ctx;
+      const x = chart.tooltip._active[0].element.x;
+      const {top,bottom} = chart.scales.y;
+      ctx2.save();
+      ctx2.beginPath();
+      ctx2.moveTo(x,top);
+      ctx2.lineTo(x,bottom);
+      ctx2.lineWidth=1.5;
+      ctx2.strokeStyle='rgba(55,65,81,0.35)';
+      ctx2.setLineDash([5,4]);
+      ctx2.stroke();
+      ctx2.restore();
+    }
+  };
+
   lineChartInstance = new Chart(canvas, {
     type: 'line',
     data: {datasets},
+    plugins: [crosshairPlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -562,9 +585,24 @@ function tekenLijnChart(){
           labels:{font:{family:'Inter,system-ui,sans-serif',size:12},padding:16,boxWidth:20,boxHeight:3,usePointStyle:true,pointStyle:'line'}
         },
         tooltip: {
-          callbacks: {
-            label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y} ${yLabel}`,
-            title: ctx=>`${Number(Math.round(ctx[0].parsed.x/50)*50).toLocaleString()} RPM`
+          enabled: false, // ingebouwde tooltip uit — eigen panel gebruiken
+          external(context){
+            const panel = document.getElementById('lijn-hover-panel');
+            if(!panel) return;
+            const tt = context.tooltip;
+            if(!tt.dataPoints?.length || tt.opacity===0){panel.style.display='none';return;}
+            const rpm = Math.round(tt.dataPoints[0].parsed.x/50)*50;
+            let html=`<div class="lijn-hover-rpm">${Number(rpm).toLocaleString()} RPM</div><div class="lijn-hover-rows">`;
+            for(const dp of tt.dataPoints){
+              html+=`<div class="lijn-hover-row">
+                <span class="lijn-hover-dash" style="background:${dp.dataset.borderColor}"></span>
+                <span class="lijn-hover-lbl">${dp.dataset.label}</span>
+                <span class="lijn-hover-val">${dp.parsed.y} ${yLabel}</span>
+              </div>`;
+            }
+            html+='</div>';
+            panel.innerHTML=html;
+            panel.style.display='block';
           }
         }
       },
@@ -574,11 +612,7 @@ function tekenLijnChart(){
           min: minRpm,
           max: maxRpm,
           title: {display:true, text:'Motor RPM', font:{family:'Inter,system-ui,sans-serif',size:12}, color:'#6b7280'},
-          ticks: {
-            font:{family:'Inter,system-ui,sans-serif'},
-            callback: v=>Number(v).toLocaleString(),
-            maxTicksLimit: 10
-          },
+          ticks: {font:{family:'Inter,system-ui,sans-serif'}, callback:v=>Number(v).toLocaleString(), maxTicksLimit:10},
           grid: {color:'#f3f4f6'}
         },
         y: {
@@ -592,48 +626,6 @@ function tekenLijnChart(){
   });
 }
 
-// ── STAAFGRAFIEK (piekwaarden) ────────────────────────────────────────────────
-function tekenBarChart(){
-  const canvas = document.getElementById('verg-chart');
-  if(!canvas) return;
-  if(barChartInstance){barChartInstance.destroy();barChartInstance=null;}
-
-  const labels = ['Vermogen (HP)','Koppel (Nm)','Max RPM / 100'];
-  const datasets = geselecteerd.map(g=>{
-    const r = g.run;
-    const s = g.sessie;
-    const tnr = testNr(r.bestandsnaam);
-    return {
-      label: `${s.motorNummer}${tnr?' #'+tnr:''}`,
-      data: [
-        parseFloat(r.vermogen)||0,
-        parseFloat(r.koppel)||0,
-        parseFloat(r.toeren) ? Math.round(parseFloat(r.toeren)/100) : 0
-      ],
-      backgroundColor: g.kleur+'cc',
-      borderColor: g.kleur,
-      borderWidth: 2,
-      borderRadius: 6,
-    };
-  });
-
-  barChartInstance = new Chart(canvas, {
-    type: 'bar',
-    data: {labels, datasets},
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {position:'top', labels:{font:{family:'Inter,system-ui,sans-serif',size:12},padding:16}},
-        tooltip: {callbacks:{label: ctx=>`${ctx.dataset.label}: ${ctx.raw}${ctx.dataIndex===2?' × 100':ctx.dataIndex===0?' HP':' Nm'}`}}
-      },
-      scales: {
-        x: {grid:{display:false},ticks:{font:{family:'Inter,system-ui,sans-serif'}}},
-        y: {beginAtZero:true,ticks:{font:{family:'Inter,system-ui,sans-serif'}}}
-      }
-    }
-  });
-}
 
 function scrollNaarVergelijking(){
   document.getElementById('vergelijking-sectie')?.scrollIntoView({behavior:'smooth',block:'start'});
