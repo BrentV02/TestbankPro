@@ -564,8 +564,14 @@ function tekenLijnChart(){
       if(pts.length>20){
         const pi=pts.reduce((mi,p,i)=>p.y>pts[mi].y?i:mi,0);
         if(pi>pts.length*0.2){
+          // Volledige curve: grote spikes (≥0.4 HP) afknippen
           for(let i=pi+1;i<pts.length;i++){
             if(pts[i].y>pts[i-1].y+0.4){pts=pts.slice(0,i);break;}
+          }
+          // Laatste 20 punten: ook kleine spikes (≥0.2 HP) afknippen
+          const checkVan=Math.max(pi+1, pts.length-20);
+          for(let i=checkVan;i<pts.length;i++){
+            if(pts[i].y>pts[i-1].y+0.2){pts=pts.slice(0,i);break;}
           }
         }
       }
