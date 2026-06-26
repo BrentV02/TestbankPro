@@ -501,7 +501,16 @@ function tekenLijnChart(){
       const r = g.run;
       const s = g.sessie;
       const tnr = testNr(r.bestandsnaam);
-      const punten = (r.curveData||[]).map(p=>({x:p.rpm, y: isHp ? p.hp : p.nm}));
+      const rawCurve = r.curveData||[];
+      // Auto-detectie: oude opgeslagen data heeft HP in Watts (>100) → omzetten
+      const maxHp = Math.max(...rawCurve.map(p=>p.hp||0));
+      const isWatts = maxHp > 100;
+      const punten = rawCurve.map(p=>({
+        x: p.rpm,
+        y: isHp
+          ? (isWatts ? Math.round(p.hp/745.7*10)/10 : p.hp)
+          : (isWatts ? Math.round(p.nm/10*10)/10 : p.nm) // nm was ook in ruw formaat
+      }));
       return {
         label: `${s.motorNummer}${tnr?' #'+tnr:''}`,
         data: punten,
