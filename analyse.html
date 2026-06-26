@@ -109,6 +109,39 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .kleur-picker-swatch{width:14px;height:14px;border-radius:4px;border:2px solid rgba(255,255,255,0.5);transition:border-color .15s;flex-shrink:0}
 .kleur-picker-label:hover .kleur-picker-swatch{border-color:#fff}
 .toggle-btn.actief{background:#2563eb;color:#fff;border-color:#2563eb}
+/* Groepskoppen merk → type → klant */
+.groep-merk{margin-bottom:20px}
+.groep-merk-head{background:#1e3a5f;color:#e0e7ff;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+.groep-type{margin-bottom:8px}
+.groep-type-head{background:#e0e7ff;color:#3730a3;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;display:inline-block}
+.groep-klant-head{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.8px;padding:6px 2px 2px 2px}
+/* Filter tegels */
+.filter-tiles{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.filter-tile{background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 14px;font-size:13px;font-weight:700;cursor:pointer;color:#374151;font-family:inherit;transition:border-color .12s,background .12s,color .12s;white-space:nowrap}
+.filter-tile:hover{border-color:#2563eb;color:#2563eb}
+.filter-tile.actief{background:#2563eb;border-color:#2563eb;color:#fff}
+.filter-tile-teller{font-size:11px;font-weight:600;opacity:.65;margin-left:5px}
+/* Analyses lijstweergave */
+.analyse-kaart{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;transition:box-shadow .15s}
+.analyse-kaart:hover{box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.analyse-kaart-body{flex:1;min-width:0;cursor:pointer}
+.analyse-kaart-naam{font-size:15px;font-weight:800;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.analyse-kaart-meta{font-size:12px;color:#6b7280;margin-top:3px}
+.analyse-acties{display:flex;gap:8px;flex-shrink:0}
+/* Editor header */
+.editor-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.editor-naam-inp{border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 12px;font-size:15px;font-weight:700;color:#111827;background:#fff;outline:none;font-family:inherit;flex:1;min-width:180px}
+.editor-naam-inp:focus{border-color:#2563eb}
+.terug-btn{background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.terug-btn:hover{background:#e5e7eb}
+.opslaan-btn{background:#16a34a;color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.opslaan-btn:hover{background:#15803d}
+.nieuwe-analyse-btn{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.nieuwe-analyse-btn:hover{background:#1d4ed8}
+.verwijder-analyse-btn{background:none;border:1.5px solid #fca5a5;color:#dc2626;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.verwijder-analyse-btn:hover{background:#fee2e2}
+.open-analyse-btn{background:#eff6ff;color:#2563eb;border:1.5px solid #bfdbfe;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.open-analyse-btn:hover{background:#dbeafe}
 @media(max-width:600px){
   #header{height:auto;min-height:52px;padding:8px 12px;gap:8px}
   #main{padding:12px 10px}
@@ -181,6 +214,31 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 const SUPABASE_URL = 'https://jonfknallwdyknxwcqww.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvbmZrbmFsbHdkeWtueHdjcXd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNDAwMjUsImV4cCI6MjA5NzgxNjAyNX0.A-uUnNT-Nlwf9ArAd56Ujml5A0XW6G0_mj8RE24On8A';
 
+function customConfirm({titel, tekst, icoon='🗑', bevestig='Verwijderen', bevestigKleur='#ef4444', onOk}) {
+  document.getElementById('app-confirm')?.remove();
+  const el = document.createElement('div');
+  el.id = 'app-confirm';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9998;display:flex;align-items:center;justify-content:center';
+  el.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:28px 32px;box-shadow:0 8px 40px rgba(0,0,0,0.18);max-width:340px;width:90%;text-align:center">
+      ${icoon?`<div style="font-size:32px;margin-bottom:10px">${icoon}</div>`:''}
+      <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">${titel}</div>
+      ${tekst?`<div style="font-size:13px;color:#6b7280;margin-bottom:22px">${tekst}</div>`:'<div style="margin-bottom:22px"></div>'}
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="ac-cancel" style="padding:8px 22px;border-radius:8px;border:1.5px solid #d1d5db;background:#fff;font-size:14px;font-weight:600;color:#374151;cursor:pointer">Annuleren</button>
+        <button class="ac-ok" style="padding:8px 22px;border-radius:8px;border:none;background:${bevestigKleur};font-size:14px;font-weight:600;color:#fff;cursor:pointer">${bevestig}</button>
+      </div>
+    </div>`;
+  el.querySelector('.ac-cancel').onclick = () => el.remove();
+  el.querySelector('.ac-ok').onclick = () => { el.remove(); onOk(); };
+  el.addEventListener('click', e => { if(e.target===el) el.remove(); });
+  document.addEventListener('keydown', function esc(e) {
+    if(e.key==='Escape'){ el.remove(); document.removeEventListener('keydown',esc); }
+  });
+  document.body.appendChild(el);
+  el.querySelector('.ac-ok').focus();
+}
+
 let sb = null;
 let sessies = [];
 let geselecteerd = []; // [{run, sessie, kleur}]
@@ -189,13 +247,22 @@ let openeSessies = new Set();
 let lineChartInstance = null;
 let lijnModus = 'hp'; // 'hp' of 'nm'
 let vergelijkingOpen = false;
+let analyseView = 'lijst'; // 'lijst' | 'editor'
+let huidigeAnalyseId = null;
+let huidigeNaam = '';
+let analyseOpgeslagen = [];
+let filterMerk = null;
+let filterType = null;
+let _tileMerken = [];
+let _tileTypes = [];
 
 function saveAnalyseState(){
   try{
     localStorage.setItem('analyse_state', JSON.stringify({
+      analyseView, huidigeAnalyseId, huidigeNaam,
       geselecteerd: geselecteerd.map(g=>({runId:g.run.id, sessieId:g.sessie.id, kleur:g.kleur})),
       openeSessies: [...openeSessies],
-      zoek, lijnModus, vergelijkingOpen
+      zoek, lijnModus, vergelijkingOpen, filterMerk, filterType
     }));
   }catch(e){}
 }
@@ -205,9 +272,14 @@ function restoreAnalyseState(){
     const raw = localStorage.getItem('analyse_state');
     if(!raw) return;
     const s = JSON.parse(raw);
+    analyseView = s.analyseView || 'lijst';
+    huidigeAnalyseId = s.huidigeAnalyseId || null;
+    huidigeNaam = s.huidigeNaam || '';
     zoek = s.zoek||'';
     lijnModus = s.lijnModus||'hp';
     vergelijkingOpen = s.vergelijkingOpen||false;
+    filterMerk = s.filterMerk||null;
+    filterType = s.filterType||null;
     if(s.openeSessies) s.openeSessies.forEach(id=>openeSessies.add(id));
     if(s.geselecteerd){
       geselecteerd = s.geselecteerd.flatMap(({runId,sessieId,kleur})=>{
@@ -219,6 +291,16 @@ function restoreAnalyseState(){
       });
     }
   }catch(e){}
+}
+
+function loadAnalyseOpgeslagen(){
+  try{ analyseOpgeslagen = JSON.parse(localStorage.getItem('analyses_opgeslagen')||'[]'); }
+  catch(e){ analyseOpgeslagen = []; }
+}
+
+function saveAnalyseOpgeslagen(){
+  try{ localStorage.setItem('analyses_opgeslagen', JSON.stringify(analyseOpgeslagen)); }
+  catch(e){}
 }
 
 function setKleur(runId, kleur){
@@ -239,7 +321,8 @@ function fromRow(r){
     testType:r.test_type||'Test', uitkomst:r.uitkomst||'Geslaagd', opmerkingen:r.opmerkingen||'',
     runs:r.runs||[], motorMerk:r.motor_merk||'', motorType:r.motor_type||'', motorNaam:r.motor_naam||'',
     carbuVanBaanHoog:r.carbu_van_baan_hoog||'', carbuVanBaanLaag:r.carbu_van_baan_laag||'',
-    carbuTestHoog:r.carbu_test_hoog||'', carbuTestLaag:r.carbu_test_laag||''};
+    carbuTestHoog:r.carbu_test_hoog||'', carbuTestLaag:r.carbu_test_laag||'',
+    created_at:r.created_at||''};
 }
 
 function badge(s){
@@ -315,6 +398,18 @@ function wisSelectie(){
   render();
 }
 
+function clickFilterMerk(i){
+  filterMerk = _tileMerken[i] === filterMerk ? null : _tileMerken[i];
+  filterType = null;
+  saveAnalyseState();
+  render();
+}
+function clickFilterType(i){
+  filterType = _tileTypes[i] === filterType ? null : _tileTypes[i];
+  saveAnalyseState();
+  render();
+}
+
 function toggleSessieOpen(sessieId){
   if(openeSessies.has(sessieId)) openeSessies.delete(sessieId);
   else openeSessies.add(sessieId);
@@ -334,14 +429,98 @@ function setLijnModus(m){
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render(){
+  if(analyseView==='lijst') renderLijstView();
+  else renderEditorView();
+}
+
+function renderLijstView(){
+  const main = document.getElementById('main');
+  if(!main) return;
+
+  const fmtBijgewerkt = d => {
+    if(!d) return '';
+    const diff = Date.now() - new Date(d).getTime();
+    const min = Math.floor(diff/60000);
+    if(min<1) return 'zojuist';
+    if(min<60) return `${min} min geleden`;
+    const uur = Math.floor(min/60);
+    if(uur<24) return `${uur} uur geleden`;
+    return new Date(d).toLocaleDateString('nl-NL',{day:'2-digit',month:'short',year:'numeric'});
+  };
+
+  const kaartenHtml = analyseOpgeslagen.length===0
+    ? `<div class="empty-state">
+        <div style="font-size:40px;margin-bottom:8px">📊</div>
+        <div style="font-weight:700;margin-bottom:6px">Nog geen analyses opgeslagen</div>
+        <div style="font-size:13px">Klik op "Nieuwe analyse" om te beginnen</div>
+       </div>`
+    : analyseOpgeslagen.map(a=>{
+        const runs = a.geselecteerd||[];
+        const motors = [...new Set(runs.map(r=>{
+          const s = sessies.find(x=>x.id===r.sessieId);
+          return s ? (s.motorNaam||s.klant||s.motorNummer) : null;
+        }).filter(Boolean))];
+        const motorsStr = motors.slice(0,3).join(', ') + (motors.length>3?` +${motors.length-3}`:'');
+        return `
+          <div class="analyse-kaart">
+            <div class="analyse-kaart-body" onclick="openAnalyse('${a.id}')">
+              <div class="analyse-kaart-naam">${esc(a.naam||'Naamloze analyse')}</div>
+              <div class="analyse-kaart-meta">
+                ${runs.length} run${runs.length!==1?'s':''}${motorsStr?` · ${esc(motorsStr)}`:''}
+                ${a.bijgewerkt?` · bijgewerkt ${fmtBijgewerkt(a.bijgewerkt)}`:''}
+              </div>
+            </div>
+            <div class="analyse-acties">
+              <button class="open-analyse-btn" onclick="openAnalyse('${a.id}')">Openen</button>
+              <button class="verwijder-analyse-btn" onclick="verwijderAnalyse('${a.id}')">Verwijder</button>
+            </div>
+          </div>`;
+      }).join('');
+
+  main.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <h2 class="page-title">Analyses</h2>
+      <button class="nieuwe-analyse-btn" onclick="nieuweAnalyse()">+ Nieuwe analyse</button>
+    </div>
+    ${kaartenHtml}`;
+}
+
+function renderEditorView(){
   const main = document.getElementById('main');
   if(!main) return;
 
   const zoekLc = zoek.toLowerCase();
-  const gefilterd = zoek
+  const recentsteDatum = s => {
+    const fallback = s.created_at ? new Date(s.created_at).getTime() : 0;
+    const datums = (s.runs||[]).map(r=>r.datum ? new Date(r.datum).getTime() : fallback);
+    return datums.length ? Math.max(...datums) : fallback;
+  };
+  const gefilterd = (zoek
     ? sessies.filter(s => [s.motorNummer,s.klant,s.motorMerk,s.motorType].some(v=>(v||'').toLowerCase().includes(zoekLc))
         || (s.runs||[]).some(r=>(r.carbu||'').toLowerCase().includes(zoekLc)||(testNr(r.bestandsnaam)||'').includes(zoekLc)))
-    : sessies;
+    : sessies).slice().sort((a,b) => recentsteDatum(b) - recentsteDatum(a));
+
+  // Bouw filtертegels
+  _tileMerken = [...new Set(gefilterd.map(s=>s.motorMerk||'— Onbekend merk'))].sort((a,b)=>a.localeCompare(b,'nl'));
+  // Zoek actief → merkfilter negeren, alles tonen
+  const zoekActief = zoek.trim().length > 0;
+  const gefilterdNaMerk = (filterMerk && !zoekActief) ? gefilterd.filter(s=>(s.motorMerk||'— Onbekend merk')===filterMerk) : gefilterd;
+  _tileTypes = [...new Set(gefilterdNaMerk.map(s=>s.motorType||'— Onbekend type'))].sort((a,b)=>a.localeCompare(b,'nl'));
+  const gefilterdNaFilter = (filterType && !zoekActief) ? gefilterdNaMerk.filter(s=>(s.motorType||'— Onbekend type')===filterType) : gefilterdNaMerk;
+
+  const merkTilesHtml = `<div class="filter-tiles">${
+    _tileMerken.map((m,i)=>{
+      const n = gefilterd.filter(s=>(s.motorMerk||'— Onbekend merk')===m).length;
+      return `<button class="filter-tile${filterMerk===m?' actief':''}" onclick="clickFilterMerk(${i})">${esc(m)}<span class="filter-tile-teller">${n}</span></button>`;
+    }).join('')
+  }</div>`;
+
+  const typeTilesHtml = filterMerk && _tileTypes.length > 1 ? `<div class="filter-tiles" style="margin-top:-4px">${
+    _tileTypes.map((t,i)=>{
+      const n = gefilterdNaMerk.filter(s=>(s.motorType||'— Onbekend type')===t).length;
+      return `<button class="filter-tile${filterType===t?' actief':''}" onclick="clickFilterType(${i})" style="font-size:12px">${esc(t)}<span class="filter-tile-teller">${n}</span></button>`;
+    }).join('')
+  }</div>` : '';
 
   // Selectiebalk
   let selectieHtml = '';
@@ -360,79 +539,122 @@ function render(){
         <span class="selectie-label">${geselecteerd.length} run${geselecteerd.length!==1?'s':''} geselecteerd</span>
         ${chips}
         <button class="wis-btn" onclick="wisSelectie()">Wis alles</button>
-        ${geselecteerd.length>=2?`<button class="vergelijk-btn" onclick="openVergelijking()">📈 Vergelijk</button>`:''}
+        ${geselecteerd.length>=2?`<button class="vergelijk-btn" onclick="startAnalyse()">📈 Analyseer</button>`:''}
       </div>`;
   }
 
-  // Sessie lijst
-  const sessieLijst = gefilterd.length===0
-    ? `<div class="empty-state"><div style="font-size:40px;margin-bottom:8px">🔍</div><div style="font-weight:600">Geen sessies gevonden</div></div>`
-    : gefilterd.map(s=>{
-        const isOpen = openeSessies.has(s.id);
-        const runs = (s.runs||[]).slice().sort((a,b)=>{
-          const na=parseInt(testNr(a.bestandsnaam)||'999999');
-          const nb=parseInt(testNr(b.bestandsnaam)||'999999');
-          return na-nb;
-        });
-        const eersteRun = runs[0];
-        const runsHtml = !isOpen ? '' : `
-          <div class="sessie-blok-runs">
-            ${runs.length===0
-              ? `<div style="color:#9ca3af;font-size:13px;padding:6px 0">Geen runs in deze sessie</div>`
-              : runs.map((r,i)=>{
-                  const gesel = isGeselecteerd(r.id);
-                  const tnr = testNr(r.bestandsnaam);
-                  const heeftCurve = r.curveData&&r.curveData.length>0;
-                  return `<div class="run-rij ${gesel?'geselecteerd':''}">
-                    <span class="run-rij-nr">${i+1}</span>
-                    <span class="run-rij-test" style="font-weight:700">${tnr?`Test #${tnr}`:'<span style="color:#d1d5db;font-style:italic;font-size:11px">Geen nr</span>'}</span>
-                    <span class="run-rij-data">
-                      ${r.vermogen?`<strong>${r.vermogen} HP</strong>`:'— HP'}
-                      ${r.koppel?` · ${r.koppel} Nm`:''}
-                      ${r.carbu?` · <span style="color:#6b7280">${esc(r.carbu)}</span>`:''}
-                      ${heeftCurve?` <span title="Curvepunten beschikbaar" style="color:#10b981;font-size:11px">📈</span>`:''}
-                      ${gesel?` <span style="color:${geselecteerd.find(g=>g.run.id===r.id)?.kleur||'#2563eb'};font-weight:700">●</span>`:''}
-                    </span>
-                    <button class="run-rij-btn ${gesel?'verwijderen':'toevoegen'}"
-                      onclick="toggleRun('${s.id}','${r.id}')">
-                      ${gesel?'✕ Verwijder':'+ Toevoegen'}
-                    </button>
-                  </div>`;
-                }).join('')}
-          </div>`;
-        return `
-          <div class="sessie-blok">
-            <div class="sessie-blok-head" onclick="toggleSessieOpen('${s.id}')">
-              <span class="open-pijl ${isOpen?'open':''}">▶</span>
-              <span class="sessie-blok-motor">${esc(s.motorNummer)}</span>
-              ${s.klant?`<span class="sessie-blok-klant">${esc(s.klant)}</span>`:''}
-              <span class="sessie-blok-meta">
-                ${typeBadge(s.testType||'Test')}
-                ${badge(s.uitkomst||'Geslaagd')}
-                <span style="font-size:11px">${eersteRun?.datum?fmtDatum(eersteRun.datum):''}</span>
-                <span style="font-size:11px;color:#9ca3af">${runs.length} run${runs.length!==1?'s':''}</span>
-              </span>
-            </div>
-            ${runsHtml}
-          </div>`;
-      }).join('');
+  // Sessie lijst — gegroepeerd op merk → type → klant
+  let sessieLijst;
+  if(gefilterdNaFilter.length===0){
+    sessieLijst = `<div class="empty-state"><div style="font-size:40px;margin-bottom:8px">🔍</div><div style="font-weight:600">Geen sessies gevonden</div></div>`;
+  } else {
+    const renderSessie = s => {
+      const isOpen = openeSessies.has(s.id);
+      const runs = (s.runs||[]).slice().sort((a,b)=>{
+        const na=parseInt(testNr(a.bestandsnaam)||'999999');
+        const nb=parseInt(testNr(b.bestandsnaam)||'999999');
+        return na-nb;
+      });
+      const eersteRun = runs[0];
+      const runsHtml = !isOpen ? '' : `
+        <div class="sessie-blok-runs">
+          ${runs.length===0
+            ? `<div style="color:#9ca3af;font-size:13px;padding:6px 0">Geen runs in deze sessie</div>`
+            : runs.map((r,i)=>{
+                const gesel = isGeselecteerd(r.id);
+                const tnr = testNr(r.bestandsnaam);
+                const heeftCurve = r.curveData&&r.curveData.length>0;
+                return `<div class="run-rij ${gesel?'geselecteerd':''}">
+                  <span class="run-rij-nr">${i+1}</span>
+                  <span class="run-rij-test" style="font-weight:700">${tnr?`Test #${tnr}`:'<span style="color:#d1d5db;font-style:italic;font-size:11px">Geen nr</span>'}</span>
+                  <span class="run-rij-data">
+                    ${r.vermogen?`<strong>${r.vermogen} HP</strong>`:'— HP'}
+                    ${r.koppel?` · ${r.koppel} Nm`:''}
+                    ${r.carbu?` · <span style="color:#6b7280">${esc(r.carbu)}</span>`:''}
+                    ${heeftCurve?` <span title="Curvepunten beschikbaar" style="color:#10b981;font-size:11px">📈</span>`:''}
+                    ${gesel?` <span style="color:${geselecteerd.find(g=>g.run.id===r.id)?.kleur||'#2563eb'};font-weight:700">●</span>`:''}
+                  </span>
+                  <button class="run-rij-btn ${gesel?'verwijderen':'toevoegen'}"
+                    onclick="toggleRun('${s.id}','${r.id}')">
+                    ${gesel?'✕ Verwijder':'+ Toevoegen'}
+                  </button>
+                </div>`;
+              }).join('')}
+        </div>`;
+      return `
+        <div class="sessie-blok">
+          <div class="sessie-blok-head" onclick="toggleSessieOpen('${s.id}')">
+            <span class="open-pijl ${isOpen?'open':''}">▶</span>
+            <span class="sessie-blok-motor">${esc(s.motorNummer)}</span>
+            <span class="sessie-blok-meta">
+              ${typeBadge(s.testType||'Test')}
+              ${badge(s.uitkomst||'Geslaagd')}
+              <span style="font-size:11px">${eersteRun?.datum?fmtDatum(eersteRun.datum):fmtDatum(s.created_at)}</span>
+              <span style="font-size:11px;color:#9ca3af">${runs.length} run${runs.length!==1?'s':''}</span>
+            </span>
+          </div>
+          ${runsHtml}
+        </div>`;
+    };
+
+    const groepen = new Map();
+    for(const s of gefilterdNaFilter){
+      const merk  = s.motorMerk  || '— Onbekend merk';
+      const type  = s.motorType  || '— Onbekend type';
+      const klant = s.klant      || '— Geen klant';
+      if(!groepen.has(merk)) groepen.set(merk, new Map());
+      const merkMap = groepen.get(merk);
+      if(!merkMap.has(type)) merkMap.set(type, new Map());
+      const typeMap = merkMap.get(type);
+      if(!typeMap.has(klant)) typeMap.set(klant, []);
+      typeMap.get(klant).push(s);
+    }
+
+    sessieLijst = [...groepen.entries()].map(([merk, types])=>`
+      <div class="groep-merk">
+        <div class="groep-merk-head">${esc(merk)}</div>
+        ${[...types.entries()].map(([type, klanten])=>`
+          <div class="groep-type">
+            <div class="groep-type-head">${esc(type)}</div>
+            ${[...klanten.entries()].map(([klant, lijst])=>`
+              <div>
+                ${klant!=='— Geen klant'?`<div class="groep-klant-head">${esc(klant)}</div>`:''}
+                ${lijst.map(renderSessie).join('')}
+              </div>
+            `).join('')}
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  }
 
   if(geselecteerd.length<2) vergelijkingOpen = false;
   const vergelijkingHtml = vergelijkingOpen && geselecteerd.length>=2 ? renderVergelijking() : '';
 
   main.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-      <h2 class="page-title">Analyse & Vergelijking</h2>
+    <div class="editor-header">
+      <button class="terug-btn" onclick="gaNaarLijst()">← Terug</button>
+      <span style="font-size:15px;font-weight:800;color:#111827;flex:1">${esc(huidigeNaam||'Nieuwe analyse')}</span>
     </div>
     ${vergelijkingHtml}
     ${selectieHtml}
     <div style="margin-bottom:12px">
       <input class="inp" id="zoek-inp" value="${esc(zoek)}" placeholder="🔍  Zoek op motor, klant, merk...">
     </div>
-    <div class="sec-label">Selecteer runs om te vergelijken (📈 = curvepunten beschikbaar)</div>
-    ${sessieLijst}`;
+    ${merkTilesHtml}
+    ${filterMerk || zoekActief ? `${!zoekActief ? typeTilesHtml : ''}<div class="sec-label" style="margin-top:4px">Selecteer runs om te vergelijken (📈 = curvepunten beschikbaar)</div>${sessieLijst}` : ''}`;
 
-  document.getElementById('zoek-inp')?.addEventListener('input',e=>{zoek=e.target.value;render();});
+  const zoekInp = document.getElementById('zoek-inp');
+  zoekInp?.addEventListener('input', e => {
+    const pos = e.target.selectionStart;
+    zoek = e.target.value;
+    render();
+    const nieuw = document.getElementById('zoek-inp');
+    if(nieuw){ nieuw.focus(); nieuw.setSelectionRange(pos, pos); }
+    if(zoek.trim()){
+      setTimeout(()=>document.querySelector('.sec-label')?.scrollIntoView({behavior:'smooth',block:'start'}), 30);
+    }
+  });
 
   if(geselecteerd.length>=2) setTimeout(()=>tekenLijnChart(),0);
 }
@@ -475,10 +697,10 @@ function renderVergelijking(){
   const rij = (lbl,veld,beste=null,fmt=v=>v??'—')=>`
     <tr class="rij-label">
       <td>${lbl}</td>
-      ${cols.map(c=>{
+      ${cols.map((c,i)=>{
         const val = c[veld];
         const isBeste = beste!==null && parseFloat(val)===beste && beste>0;
-        return `<td class="${isBeste?'beste':''}">${fmt(val)}</td>`;
+        return `<td class="${isBeste?'beste':''}">${fmt(val,i)}</td>`;
       }).join('')}
     </tr>`;
 
@@ -707,15 +929,102 @@ function tekenLijnChart(){
 }
 
 
-function openVergelijking(){
+function genAnalyseNaam(){
+  const motors = [...new Set(geselecteerd.map(g=>
+    g.sessie.motorNaam||g.sessie.klant||g.sessie.motorNummer
+  ).filter(Boolean))];
+  const datum = new Date().toLocaleDateString('nl-NL',{day:'2-digit',month:'short'});
+  if(!motors.length) return `Analyse · ${datum}`;
+  if(motors.length<=2) return `${motors.join(' & ')} · ${datum}`;
+  return `${motors[0]} +${motors.length-1} · ${datum}`;
+}
+
+function startAnalyse(){
   vergelijkingOpen = true;
+  // Bestaande analyse updaten of nieuwe aanmaken
+  const naam = huidigeAnalyseId
+    ? (analyseOpgeslagen.find(a=>a.id===huidigeAnalyseId)?.naam || genAnalyseNaam())
+    : genAnalyseNaam();
+  huidigeNaam = naam;
+  const nu = new Date().toISOString();
+  const data = {
+    naam,
+    geselecteerd: geselecteerd.map(g=>({runId:g.run.id, sessieId:g.sessie.id, kleur:g.kleur})),
+    lijnModus, vergelijkingOpen: true, bijgewerkt: nu
+  };
+  if(huidigeAnalyseId){
+    analyseOpgeslagen = analyseOpgeslagen.map(a=>a.id===huidigeAnalyseId ? {...a,...data} : a);
+  } else {
+    huidigeAnalyseId = crypto.randomUUID();
+    analyseOpgeslagen = [{id:huidigeAnalyseId, ...data, aangemaakt:nu}, ...analyseOpgeslagen];
+  }
+  saveAnalyseOpgeslagen();
   saveAnalyseState();
   render();
   setTimeout(()=>document.getElementById('vergelijking-sectie')?.scrollIntoView({behavior:'smooth',block:'start'}), 50);
 }
 
+function openVergelijking(){ startAnalyse(); }
+
 function scrollNaarVergelijking(){
   document.getElementById('vergelijking-sectie')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── ANALYSE BEHEER ────────────────────────────────────────────────────────────
+function nieuweAnalyse(){
+  huidigeAnalyseId = null;
+  huidigeNaam = '';
+  geselecteerd = [];
+  openeSessies = new Set();
+  zoek = '';
+  lijnModus = 'hp';
+  vergelijkingOpen = false;
+  analyseView = 'editor';
+  saveAnalyseState();
+  render();
+  window.scrollTo(0,0);
+}
+
+function openAnalyse(id){
+  const a = analyseOpgeslagen.find(x=>x.id===id);
+  if(!a) return;
+  huidigeAnalyseId = id;
+  huidigeNaam = a.naam||'';
+  lijnModus = a.lijnModus||'hp';
+  vergelijkingOpen = a.vergelijkingOpen||false;
+  openeSessies = new Set();
+  zoek = '';
+  geselecteerd = (a.geselecteerd||[]).flatMap(({runId,sessieId,kleur})=>{
+    const sessie = sessies.find(ss=>ss.id===sessieId);
+    if(!sessie) return [];
+    const run = (sessie.runs||[]).find(r=>r.id===runId);
+    if(!run) return [];
+    return [{run, sessie, kleur}];
+  });
+  analyseView = 'editor';
+  saveAnalyseState();
+  render();
+  window.scrollTo(0,0);
+}
+
+
+function verwijderAnalyse(id){
+  customConfirm({
+    titel: 'Analyse verwijderen?',
+    tekst: 'Dit kan niet ongedaan worden gemaakt.',
+    onOk: ()=>{
+      analyseOpgeslagen = analyseOpgeslagen.filter(a=>a.id!==id);
+      saveAnalyseOpgeslagen();
+      render();
+    }
+  });
+}
+
+function gaNaarLijst(){
+  analyseView = 'lijst';
+  saveAnalyseState();
+  render();
+  window.scrollTo(0,0);
 }
 
 // ── AUTH + INIT ────────────────────────────────────────────────────────────────
@@ -724,6 +1033,7 @@ async function laadEnToon(){
   document.getElementById('main').innerHTML='<div class="loading">⏳ Laden...</div>';
   document.getElementById('db-status').innerHTML='<span class="db-dot" style="background:#10b981"></span>Supabase';
   sessies = await dbLoad();
+  loadAnalyseOpgeslagen();
   restoreAnalyseState();
   render();
 }

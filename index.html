@@ -592,7 +592,11 @@ async function loadAndShow() {
     if (navTarget === 'motoren') { localStorage.removeItem('tbp_motoren_view'); window.location.href = 'motoren.html'; return; }
     else if (navTarget === 'sessies') view = 'lijst';
   } else {
-    restoreViewState();
+    const navType = performance.getEntriesByType('navigation')[0]?.type;
+    if (navType === 'reload') {
+      restoreViewState();
+    }
+    // navigate / back_forward / prerender → altijd terug naar lijst
   }
   render();
 }
