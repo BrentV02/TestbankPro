@@ -1,0 +1,11 @@
+{
+  "name": "ProDynoDFK",
+  "short_name": "ProDynoDFK",
+  "icons": [
+    { "src": "logos/dfk-icon.png", "sizes": "any", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827"
+}
