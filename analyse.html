@@ -1077,7 +1077,7 @@ function addTouchCrosshair(canvasEl, chart, raster){
   canvasEl.addEventListener('touchend', e=>{
     e.preventDefault();
     prev = cp(e.touches);
-    if(e.touches.length===0) hideCrosshair();
+    // Crosshair blijft staan op laatste positie — niet verbergen bij loslaten
   },{passive:false});
 }
 
