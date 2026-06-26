@@ -674,10 +674,10 @@ function parseSpx(buffer, filename) {
     const ratio = parseFloat(get('ratio'))||1.0;
     const HP_CONV = corrFact / 745.7; // Watts → HP (incl. correctiefactor)
     const NM_CONV = corrFact / ratio; // wielkoppel Nm → motor Nm (incl. correctiefactor)
-    // pre_count = samples vóór de ramp (motor accelereert nog niet)
-    // post_count = samples nà de ramp (motor draait uit → artefact aan het einde)
+    // pre_count = samples vóór de ramp, post_count = samples nà de ramp
+    // Extra buffer (+20) voor artefacten net vóór het einde van de ramp
     const preCount = parseInt(get('pre_count'))||0;
-    const postCount = parseInt(get('post_count'))||0;
+    const postCount = (parseInt(get('post_count'))||0) + 20;
     const iStart = preCount;
     const iEnd = n - postCount;
     for (let i=iStart;i<iEnd;i++) {
@@ -687,6 +687,15 @@ function parseSpx(buffer, filename) {
       if (rpm>=5500&&rpm<=16000&&hp>0.5) curveData.push({rpm:Math.round(rpm),hp:Math.round(hp*10)/10,nm:Math.round(nm*10)/10});
     }
     curveData.sort((a,b)=>a.rpm-b.rpm);
+    // Spike-detectie: na het HP-piekpunt een onnatuurlijke stijging afknippen
+    if(curveData.length>20){
+      const peakIdx=curveData.reduce((pi,p,i)=>p.hp>curveData[pi].hp?i:pi,0);
+      if(peakIdx>curveData.length*0.2){
+        for(let i=peakIdx+1;i<curveData.length;i++){
+          if(curveData[i].hp>curveData[i-1].hp+0.8){curveData=curveData.slice(0,i);break;}
+        }
+      }
+    }
     const step=Math.max(1,Math.floor(curveData.length/150));
     curveData=curveData.filter((_,i)=>i%step===0);
   } catch(e) { curveData=[]; }
