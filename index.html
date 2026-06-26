@@ -411,14 +411,13 @@ function carbuDefaults(){ try{return JSON.parse(localStorage.getItem('tbp_carbu_
 function carbuDefaultFill(mt){
   const def=carbuDefaults()[mt]; if(!def) return;
   const setIfEmpty=(id,v)=>{ const el=document.getElementById(id); if(el&&!el.value&&v) el.value=v; };
-  setIfEmpty('sf-ca',def.ca); setIfEmpty('sf-cvbh',def.cvbh); setIfEmpty('sf-cvbl',def.cvbl);
   setIfEmpty('sf-cth',def.cth); setIfEmpty('sf-ctl',def.ctl);
 }
 function carbuDefaultSave(){
   const mt=document.getElementById('sf-mt')?.value.trim();
   if(!mt){alert('Vul eerst een motortype in.');return;}
   const all=carbuDefaults();
-  all[mt]={ca:document.getElementById('sf-ca')?.value.trim()||'',cvbh:document.getElementById('sf-cvbh')?.value.trim()||'',cvbl:document.getElementById('sf-cvbl')?.value.trim()||'',cth:document.getElementById('sf-cth')?.value.trim()||'',ctl:document.getElementById('sf-ctl')?.value.trim()||''};
+  all[mt]={cth:document.getElementById('sf-cth')?.value.trim()||'',ctl:document.getElementById('sf-ctl')?.value.trim()||''};
   localStorage.setItem('tbp_carbu_def',JSON.stringify(all));
   renderNieuw(); setTimeout(()=>{document.getElementById('carbu-def-ok')?.classList.add('zichtbaar');},50);
 }
