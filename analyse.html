@@ -1067,7 +1067,7 @@ function addTouchCrosshair(canvasEl, chart, raster){
       const dCur  = Math.hypot(cur[1].x-cur[0].x, cur[1].y-cur[0].y);
       const dPrev = Math.hypot(prev[1].x-prev[0].x, prev[1].y-prev[0].y);
       if(dPrev>20 && Math.abs(dCur-dPrev)>4){
-        const factor = 1+(dPrev/dCur-1)*0.15;
+        const factor = 1+(dCur/dPrev-1)*0.15;
         try{chart.zoom({x:factor});}catch(_){}
       }
     }
