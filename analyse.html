@@ -85,6 +85,17 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .reset-zoom-btn{background:#f3f4f6;border:1.5px solid #e5e7eb;border-radius:7px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:#374151;display:none}
 .reset-zoom-btn.zichtbaar{display:inline-block}
 .reset-zoom-btn:hover{background:#e5e7eb}
+.fs-open-btn{background:#374151;border:none;color:#d1d5db;border-radius:7px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.fs-open-btn:hover{background:#4b5563;color:#fff}
+/* Fullscreen grafiek overlay */
+#grafiek-fs{position:fixed;inset:0;background:#0f172a;z-index:10001;display:flex;flex-direction:column}
+.fs-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.08)}
+.fs-titel{color:#94a3b8;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.fs-sluit-btn{background:#374151;border:none;color:#fff;border-radius:8px;padding:6px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.fs-sluit-btn:hover{background:#4b5563}
+.fs-chart-wrap{flex:1;position:relative;min-height:0;padding:4px 8px}
+.fs-chart-wrap canvas{touch-action:none}
+#lijn-hover-panel-fs{margin:0 12px 10px;flex-shrink:0}
 /* Hover datapanel onder de grafiek */
 .lijn-hover-panel{background:#1e293b;border-radius:10px;padding:11px 16px;margin-top:10px;display:none}
 .lijn-hover-rpm{font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase}
@@ -251,6 +262,10 @@ let geselecteerd = []; // [{run, sessie, kleur}]
 let zoek = '';
 let openeSessies = new Set();
 let lineChartInstance = null;
+let fsChartInstance = null;
+let _chartRaster = [];
+let _chartDatasets = [];
+let _chartYLabel = 'HP';
 let lijnModus = 'hp'; // 'hp' of 'nm'
 let vergelijkingOpen = false;
 let analyseView = 'lijst'; // 'lijst' | 'editor'
@@ -794,6 +809,7 @@ function renderVergelijking(){
           📈 Vermogenskromme
           <div class="toggle-wrap">
             <button class="reset-zoom-btn" id="reset-zoom-btn" onclick="resetZoom()">↺ Reset zoom</button>
+            <button class="fs-open-btn" onclick="openVollescherm()">⛶ Vollescherm</button>
             <button class="toggle-btn actief" data-modus="hp" onclick="setLijnModus('hp')">HP</button>
             <button class="toggle-btn" data-modus="nm" onclick="setLijnModus('nm')">Nm</button>
           </div>
@@ -894,6 +910,11 @@ function tekenLijnChart(){
     };
   });
 
+  // Sla op voor fullscreen hergebruik
+  _chartRaster = raster;
+  _chartDatasets = datasets;
+  _chartYLabel = yLabel;
+
   // Crosshair plugin — tekent een verticale stippellijn bij hover
   const crosshairPlugin = {
     id:'crosshair',
@@ -992,6 +1013,112 @@ function tekenLijnChart(){
 function resetZoom(){
   if(lineChartInstance) lineChartInstance.resetZoom();
   document.getElementById('reset-zoom-btn')?.classList.remove('zichtbaar');
+}
+
+function addTouchCrosshair(canvasEl, chart, raster){
+  const update = clientX => {
+    const rect = canvasEl.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const idx = Math.max(0, Math.min(raster.length-1, Math.round(chart.scales.x.getValueForPixel(x))));
+    chart.tooltip.setActiveElements(chart.data.datasets.map((_,di)=>({datasetIndex:di,index:idx})), {x,y:0});
+    chart.update('none');
+  };
+  canvasEl.addEventListener('touchstart', e=>{ if(e.touches.length===1){e.preventDefault();update(e.touches[0].clientX);} },{passive:false});
+  canvasEl.addEventListener('touchmove',  e=>{ if(e.touches.length===1){e.preventDefault();update(e.touches[0].clientX);} },{passive:false});
+  canvasEl.addEventListener('touchend',   e=>{
+    if(e.touches.length===0){
+      chart.tooltip.setActiveElements([],{x:0,y:0});
+      chart.update('none');
+      const p=document.getElementById('lijn-hover-panel-fs'); if(p) p.style.display='none';
+    }
+  },{passive:false});
+}
+
+function tekenFsChart(canvasEl){
+  if(fsChartInstance){fsChartInstance.destroy();fsChartInstance=null;}
+  if(!_chartRaster.length) return;
+  const raster = _chartRaster;
+  const yLabel = _chartYLabel;
+  const crosshairFs = {
+    id:'crosshair-fs',
+    afterDraw(chart){
+      if(!chart.tooltip?._active?.length) return;
+      const ctx2=chart.ctx, x=chart.tooltip._active[0].element.x;
+      const {top,bottom}=chart.scales.y;
+      ctx2.save();ctx2.beginPath();ctx2.moveTo(x,top);ctx2.lineTo(x,bottom);
+      ctx2.lineWidth=2;ctx2.strokeStyle='rgba(255,255,255,0.4)';
+      ctx2.setLineDash([6,4]);ctx2.stroke();ctx2.restore();
+    }
+  };
+  fsChartInstance = new Chart(canvasEl,{
+    type:'line',
+    data:{labels:raster, datasets:_chartDatasets.map(d=>({...d}))},
+    plugins:[crosshairFs],
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        zoom:{
+          zoom:{wheel:{enabled:false},pinch:{enabled:true},mode:'x'},
+          pan:{enabled:true,mode:'x'},
+          limits:{x:{min:'original',max:'original'}}
+        },
+        legend:{position:'top',labels:{font:{family:'Inter,system-ui,sans-serif',size:12},color:'#cbd5e1',padding:14,boxWidth:20,boxHeight:3,usePointStyle:true,pointStyle:'line'}},
+        tooltip:{
+          enabled:false,
+          external(context){
+            const panel=document.getElementById('lijn-hover-panel-fs');
+            if(!panel) return;
+            const tt=context.tooltip;
+            if(!tt.dataPoints?.length||tt.opacity===0){panel.style.display='none';return;}
+            const rpm=raster[tt.dataPoints[0].dataIndex];
+            const geldig=tt.dataPoints.filter(dp=>dp.parsed.y!==null);
+            const maxVal=geldig.length?Math.max(...geldig.map(dp=>dp.parsed.y)):null;
+            let html=`<div class="lijn-hover-rpm">${Number(rpm).toLocaleString()} RPM</div><div class="lijn-hover-rows">`;
+            for(const dp of geldig){
+              const val=dp.parsed.y;
+              const diff=maxVal!==null?Math.round((val-maxVal)*10)/10:null;
+              const diffHtml=diff!==null&&diff!==0?`<span class="lijn-hover-diff">${diff>0?'+':''}${diff} ${yLabel}</span>`:`<span class="lijn-hover-best">▲</span>`;
+              html+=`<div class="lijn-hover-row"><span class="lijn-hover-dash" style="background:${dp.dataset.borderColor}"></span><span class="lijn-hover-lbl">${dp.dataset.label}</span><span class="lijn-hover-val">${val} ${yLabel}</span>${diffHtml}</div>`;
+            }
+            html+='</div>';
+            panel.innerHTML=html; panel.style.display='block';
+          }
+        }
+      },
+      scales:{
+        x:{title:{display:true,text:'Motor RPM',font:{family:'Inter,system-ui,sans-serif',size:11},color:'#64748b'},ticks:{font:{family:'Inter,system-ui,sans-serif',size:11},color:'#94a3b8',callback:(_,i)=>i%20===0?Number(raster[i]).toLocaleString():null,maxRotation:0},grid:{color:'rgba(255,255,255,0.06)'}},
+        y:{min:0,title:{display:true,text:yLabel,font:{family:'Inter,system-ui,sans-serif',size:11},color:'#64748b'},ticks:{font:{family:'Inter,system-ui,sans-serif',size:11},color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.06)'}}
+      }
+    }
+  });
+  addTouchCrosshair(canvasEl, fsChartInstance, raster);
+}
+
+function openVollescherm(){
+  if(!_chartRaster.length) return;
+  if(document.getElementById('grafiek-fs')) return;
+  const el = document.createElement('div');
+  el.id = 'grafiek-fs';
+  el.innerHTML = `
+    <div class="fs-header">
+      <span class="fs-titel">📈 ${_chartYLabel} vs RPM</span>
+      <button class="fs-sluit-btn" onclick="sluitVollescherm()">✕ Sluiten</button>
+    </div>
+    <div class="fs-chart-wrap"><canvas id="lijn-chart-fs"></canvas></div>
+    <div class="lijn-hover-panel" id="lijn-hover-panel-fs"></div>`;
+  document.body.appendChild(el);
+  (el.requestFullscreen||document.documentElement.requestFullscreen).call(el.requestFullscreen?el:document.documentElement)
+    .then(()=>screen.orientation?.lock?.('landscape-primary').catch(()=>{}))
+    .catch(()=>{});
+  setTimeout(()=>tekenFsChart(document.getElementById('lijn-chart-fs')), 80);
+}
+
+function sluitVollescherm(){
+  if(fsChartInstance){fsChartInstance.destroy();fsChartInstance=null;}
+  document.getElementById('grafiek-fs')?.remove();
+  screen.orientation?.unlock?.();
+  if(document.fullscreenElement) document.exitFullscreen?.().catch(()=>{});
 }
 
 function genAnalyseNaam(){
