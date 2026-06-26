@@ -652,7 +652,13 @@ function renderEditorView(){
     const nieuw = document.getElementById('zoek-inp');
     if(nieuw){ nieuw.focus(); nieuw.setSelectionRange(pos, pos); }
     if(zoek.trim()){
-      setTimeout(()=>document.querySelector('.sec-label')?.scrollIntoView({behavior:'smooth',block:'start'}), 30);
+      setTimeout(()=>{
+        const inp = document.getElementById('zoek-inp');
+        if(inp){
+          const top = inp.getBoundingClientRect().top + window.scrollY - 66;
+          window.scrollTo({top: Math.max(0, top), behavior:'smooth'});
+        }
+      }, 30);
     }
   });
 
