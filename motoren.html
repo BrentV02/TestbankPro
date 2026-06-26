@@ -582,18 +582,32 @@ async function saveMotorNieuw(){
 // ── REALTIME ──────────────────────────────────────────────────────────────────
 function startRealtime(){
   if(!sb) return;
-  sb.channel('sessies-live')
+  sb.channel('tbp-live')
     .on('postgres_changes',{event:'*',schema:'public',table:'sessies'},payload=>{
       if(payload.eventType==='INSERT'){
         const nieuw=fromRow(payload.new);
         if(!sessies.find(s=>s.id===nieuw.id)) sessies=[nieuw,...sessies];
       } else if(payload.eventType==='UPDATE'){
-        const bijgewerkt=fromRow(payload.new);
-        sessies=sessies.map(s=>s.id===bijgewerkt.id?bijgewerkt:s);
+        const bij=fromRow(payload.new);
+        sessies=sessies.map(s=>s.id===bij.id?bij:s);
       } else if(payload.eventType==='DELETE'){
         sessies=sessies.filter(s=>s.id!==payload.old.id);
       }
+      const sy=window.scrollY;
       render();
+      window.scrollTo({top:sy,behavior:'instant'});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'motoren'},payload=>{
+      if(payload.eventType==='DELETE'){
+        delete motorenCache[payload.old.motor_nummer];
+        if(selectedMotor?.motorNummer===payload.old.motor_nummer){selectedMotor=null;view='motoren';}
+      } else if(payload.new){
+        const r=payload.new;
+        motorenCache[r.motor_nummer]={klant:r.klant||'',motorMerk:r.motor_merk||'',motorType:r.motor_type||'',motorNaam:r.motor_naam||'',status:r.status||'Actief'};
+      }
+      const sy=window.scrollY;
+      render();
+      window.scrollTo({top:sy,behavior:'instant'});
     })
     .subscribe();
 }

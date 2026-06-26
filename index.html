@@ -523,27 +523,31 @@ document.addEventListener('keydown', e => {
 // ── REALTIME ──────────────────────────────────────────────────────────────────
 function startRealtime() {
   if (!sb) return;
-  sb.channel('sessies-live')
+  sb.channel('tbp-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'sessies' }, payload => {
       if (payload.eventType === 'INSERT') {
         const nieuw = fromRow(payload.new);
-        if (!sessies.find(s => s.id === nieuw.id)) {
-          sessies = [nieuw, ...sessies];
-          saveLocal();
-          if (view === 'lijst') renderLijst();
-        }
+        if (!sessies.find(s => s.id === nieuw.id)) { sessies = [nieuw, ...sessies]; saveLocal(); }
       } else if (payload.eventType === 'UPDATE') {
-        const bijgewerkt = fromRow(payload.new);
-        sessies = sessies.map(s => s.id === bijgewerkt.id ? bijgewerkt : s);
-        if (selected?.id === bijgewerkt.id) selected = bijgewerkt;
+        const bij = fromRow(payload.new);
+        sessies = sessies.map(s => s.id === bij.id ? bij : s);
+        if (selected?.id === bij.id) { selected = bij; }
         saveLocal();
-        render();
       } else if (payload.eventType === 'DELETE') {
-        const verwijderdId = payload.old.id;
-        sessies = sessies.filter(s => s.id !== verwijderdId);
-        if (selected?.id === verwijderdId) { selected = null; view = 'lijst'; }
+        sessies = sessies.filter(s => s.id !== payload.old.id);
+        if (selected?.id === payload.old.id) { selected = null; view = 'lijst'; }
         saveLocal();
-        render();
+      }
+      const sy = window.scrollY;
+      render();
+      window.scrollTo({ top: sy, behavior: 'instant' });
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'motoren' }, payload => {
+      if (payload.eventType === 'DELETE') {
+        delete motorenCache[payload.old.motor_nummer];
+      } else if (payload.new) {
+        const r = payload.new;
+        motorenCache[r.motor_nummer] = { klant: r.klant||'', motorMerk: r.motor_merk||'', motorType: r.motor_type||'', motorNaam: r.motor_naam||'', status: r.status||'Actief' };
       }
     })
     .subscribe();
