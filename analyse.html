@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="ProDynoDFK">
-<title>Analyse â€“ ProDynoDFK</title>
+<title>Analyse – ProDynoDFK</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
@@ -145,7 +145,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .kleur-picker-swatch{width:14px;height:14px;border-radius:4px;border:2px solid rgba(255,255,255,0.5);transition:border-color .15s;flex-shrink:0}
 .kleur-picker-label:hover .kleur-picker-swatch{border-color:#fff}
 .toggle-btn.actief{background:#2563eb;color:#fff;border-color:#2563eb}
-/* Groepskoppen merk â†’ type â†’ klant */
+/* Groepskoppen merk → type → klant */
 .groep-merk{margin-bottom:20px}
 .groep-merk-head{background:#1e3a5f;color:#e0e7ff;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
 .groep-type{margin-bottom:8px}
@@ -221,7 +221,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
     <div class="login-title">Inloggen</div>
     <div class="login-sub">ProDynoDFK Testbank</div>
     <div class="login-field"><label class="login-label">E-mailadres</label><input class="login-input" id="login-email" type="email" placeholder="naam@voorbeeld.be" autocomplete="username"></div>
-    <div class="login-field"><label class="login-label">Wachtwoord</label><input class="login-input" id="login-pass" type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password"></div>
+    <div class="login-field"><label class="login-label">Wachtwoord</label><input class="login-input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">Inloggen</button>
     <div class="login-error" id="login-error"></div>
   </div>
@@ -250,13 +250,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
   </div>
 </header>
 
-<div id="main"><div class="loading">â³ Laden...</div></div>
+<div id="main"><div class="loading">⏳ Laden...</div></div>
 
 <script>
 const SUPABASE_URL = 'https://jonfknallwdyknxwcqww.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvbmZrbmFsbHdkeWtueHdjcXd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNDAwMjUsImV4cCI6MjA5NzgxNjAyNX0.A-uUnNT-Nlwf9ArAd56Ujml5A0XW6G0_mj8RE24On8A';
 
-function customConfirm({titel, tekst, icoon='ðŸ—‘', bevestig='Verwijderen', bevestigKleur='#ef4444', onOk}) {
+function customConfirm({titel, tekst, icoon='🗑', bevestig='Verwijderen', bevestigKleur='#ef4444', onOk}) {
   document.getElementById('app-confirm')?.remove();
   const el = document.createElement('div');
   el.id = 'app-confirm';
@@ -358,8 +358,8 @@ function setKleur(runId, kleur){
 const KLEUREN = ['#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
 
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const fmtDt = d => d ? new Date(d).toLocaleString('nl-NL',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'â€”';
-const fmtDatum = d => d ? new Date(d).toLocaleDateString('nl-NL',{day:'2-digit',month:'short',year:'numeric'}) : 'â€”';
+const fmtDt = d => d ? new Date(d).toLocaleString('nl-NL',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+const fmtDatum = d => d ? new Date(d).toLocaleDateString('nl-NL',{day:'2-digit',month:'short',year:'numeric'}) : '—';
 const testNr = f => f ? (f.match(/(\d+)\.[^.]+$/)||f.match(/(\d+)$/))?.[1]||'' : '';
 
 function fromRow(r){
@@ -380,7 +380,7 @@ function typeBadge(t){
   return `<span class="tbadge ${c}">${esc(t)}</span>`;
 }
 
-// â”€â”€ DATABASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── DATABASE ─────────────────────────────────────────────────────────────────
 async function dbLoad(){
   const {data,error} = await sb.from('sessies').select('*').order('created_at',{ascending:false});
   if(error){console.error(error);return [];}
@@ -419,7 +419,7 @@ async function dbDeleteAnalyse(id){
   if(error) console.error('Analyse verwijderen mislukt:',error);
 }
 
-// â”€â”€ NAVIGATIE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── NAVIGATIE ─────────────────────────────────────────────────────────────────
 function toggleNav(){document.getElementById('nav-dropdown').classList.toggle('open');}
 document.addEventListener('click',e=>{if(!e.target.closest('.nav-wrap')) document.getElementById('nav-dropdown')?.classList.remove('open');});
 
@@ -445,7 +445,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&document.getElementById('login-screen').classList.contains('active')) doLogin();
 });
 
-// â”€â”€ SELECTIE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SELECTIE ──────────────────────────────────────────────────────────────────
 function isGeselecteerd(runId){return geselecteerd.some(g=>g.run.id===runId);}
 
 function toggleRun(sessieId, runId){
@@ -505,7 +505,7 @@ function setLijnModus(m){
   });
 }
 
-// â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── RENDER ────────────────────────────────────────────────────────────────────
 function render(){
   if(analyseView==='lijst') renderLijstView();
   else renderEditorView();
@@ -528,7 +528,7 @@ function renderLijstView(){
 
   const kaartenHtml = analyseOpgeslagen.length===0
     ? `<div class="empty-state">
-        <div style="font-size:40px;margin-bottom:8px">ðŸ“Š</div>
+        <div style="font-size:40px;margin-bottom:8px">📊</div>
         <div style="font-weight:700;margin-bottom:6px">Nog geen analyses opgeslagen</div>
         <div style="font-size:13px">Klik op "Nieuwe analyse" om te beginnen</div>
        </div>`
@@ -544,8 +544,8 @@ function renderLijstView(){
             <div class="analyse-kaart-body" onclick="openAnalyse('${a.id}')">
               <div class="analyse-kaart-naam">${esc(a.naam||'Naamloze analyse')}</div>
               <div class="analyse-kaart-meta">
-                ${runs.length} run${runs.length!==1?'s':''}${motorsStr?` Â· ${esc(motorsStr)}`:''}
-                ${a.bijgewerkt?` Â· bijgewerkt ${fmtBijgewerkt(a.bijgewerkt)}`:''}
+                ${runs.length} run${runs.length!==1?'s':''}${motorsStr?` · ${esc(motorsStr)}`:''}
+                ${a.bijgewerkt?` · bijgewerkt ${fmtBijgewerkt(a.bijgewerkt)}`:''}
               </div>
             </div>
             <div class="analyse-acties">
@@ -578,24 +578,24 @@ function renderEditorView(){
         || (s.runs||[]).some(r=>(r.carbu||'').toLowerCase().includes(zoekLc)||(testNr(r.bestandsnaam)||'').includes(zoekLc)))
     : sessies).slice().sort((a,b) => recentsteDatum(b) - recentsteDatum(a));
 
-  // Bouw filtÐµÑ€Ñ‚egels
-  _tileMerken = [...new Set(gefilterd.map(s=>s.motorMerk||'â€” Onbekend merk'))].sort((a,b)=>a.localeCompare(b,'nl'));
-  // Zoek actief â†’ merkfilter negeren, alles tonen
+  // Bouw filtертegels
+  _tileMerken = [...new Set(gefilterd.map(s=>s.motorMerk||'— Onbekend merk'))].sort((a,b)=>a.localeCompare(b,'nl'));
+  // Zoek actief → merkfilter negeren, alles tonen
   const zoekActief = zoek.trim().length > 0;
-  const gefilterdNaMerk = (filterMerk && !zoekActief) ? gefilterd.filter(s=>(s.motorMerk||'â€” Onbekend merk')===filterMerk) : gefilterd;
-  _tileTypes = [...new Set(gefilterdNaMerk.map(s=>s.motorType||'â€” Onbekend type'))].sort((a,b)=>a.localeCompare(b,'nl'));
-  const gefilterdNaFilter = (filterType && !zoekActief) ? gefilterdNaMerk.filter(s=>(s.motorType||'â€” Onbekend type')===filterType) : gefilterdNaMerk;
+  const gefilterdNaMerk = (filterMerk && !zoekActief) ? gefilterd.filter(s=>(s.motorMerk||'— Onbekend merk')===filterMerk) : gefilterd;
+  _tileTypes = [...new Set(gefilterdNaMerk.map(s=>s.motorType||'— Onbekend type'))].sort((a,b)=>a.localeCompare(b,'nl'));
+  const gefilterdNaFilter = (filterType && !zoekActief) ? gefilterdNaMerk.filter(s=>(s.motorType||'— Onbekend type')===filterType) : gefilterdNaMerk;
 
   const merkTilesHtml = `<div class="filter-tiles">${
     _tileMerken.map((m,i)=>{
-      const n = gefilterd.filter(s=>(s.motorMerk||'â€” Onbekend merk')===m).length;
+      const n = gefilterd.filter(s=>(s.motorMerk||'— Onbekend merk')===m).length;
       return `<button class="filter-tile${filterMerk===m?' actief':''}" onclick="clickFilterMerk(${i})">${esc(m)}<span class="filter-tile-teller">${n}</span></button>`;
     }).join('')
   }</div>`;
 
   const typeTilesHtml = filterMerk && _tileTypes.length > 1 ? `<div class="filter-tiles" style="margin-top:-4px">${
     _tileTypes.map((t,i)=>{
-      const n = gefilterdNaMerk.filter(s=>(s.motorType||'â€” Onbekend type')===t).length;
+      const n = gefilterdNaMerk.filter(s=>(s.motorType||'— Onbekend type')===t).length;
       return `<button class="filter-tile${filterType===t?' actief':''}" onclick="clickFilterType(${i})" style="font-size:12px">${esc(t)}<span class="filter-tile-teller">${n}</span></button>`;
     }).join('')
   }</div>` : '';
@@ -610,21 +610,21 @@ function renderEditorView(){
           <span class="kleur-picker-swatch" style="background:${g.kleur}"></span>
         </label>
         ${esc(g.sessie.motorNaam||g.sessie.klant||g.sessie.motorNummer)}${testNr(g.run.bestandsnaam)?` #${testNr(g.run.bestandsnaam)}`:''}
-        <button onclick="verwijderUitSelectie('${g.run.id}')">âœ•</button>
+        <button onclick="verwijderUitSelectie('${g.run.id}')">✕</button>
       </span>`).join('');
     selectieHtml = `
       <div class="selectie-balk">
         <span class="selectie-label">${geselecteerd.length} run${geselecteerd.length!==1?'s':''} geselecteerd</span>
         ${chips}
         <button class="wis-btn" onclick="wisSelectie()">Wis alles</button>
-        ${geselecteerd.length>=2?`<button class="vergelijk-btn" onclick="startAnalyse()">ðŸ“ˆ Analyseer</button>`:''}
+        ${geselecteerd.length>=2?`<button class="vergelijk-btn" onclick="startAnalyse()">📈 Analyseer</button>`:''}
       </div>`;
   }
 
-  // Sessie lijst â€” gegroepeerd op merk â†’ type â†’ klant
+  // Sessie lijst — gegroepeerd op merk → type → klant
   let sessieLijst;
   if(gefilterdNaFilter.length===0){
-    sessieLijst = `<div class="empty-state"><div style="font-size:40px;margin-bottom:8px">ðŸ”</div><div style="font-weight:600">Geen sessies gevonden</div></div>`;
+    sessieLijst = `<div class="empty-state"><div style="font-size:40px;margin-bottom:8px">🔍</div><div style="font-weight:600">Geen sessies gevonden</div></div>`;
   } else {
     const renderSessie = s => {
       const isOpen = openeSessies.has(s.id);
@@ -646,15 +646,15 @@ function renderEditorView(){
                   <span class="run-rij-nr">${i+1}</span>
                   <span class="run-rij-test" style="font-weight:700">${tnr?`Test #${tnr}`:'<span style="color:#d1d5db;font-style:italic;font-size:11px">Geen nr</span>'}</span>
                   <span class="run-rij-data">
-                    ${r.vermogen?`<strong>${r.vermogen} HP</strong>`:'â€” HP'}
-                    ${r.koppel?` Â· ${r.koppel} Nm`:''}
-                    ${r.carbu?` Â· <span style="color:#6b7280">${esc(r.carbu)}</span>`:''}
-                    ${heeftCurve?` <span title="Curvepunten beschikbaar" style="color:#10b981;font-size:11px">ðŸ“ˆ</span>`:''}
-                    ${gesel?` <span style="color:${geselecteerd.find(g=>g.run.id===r.id)?.kleur||'#2563eb'};font-weight:700">â—</span>`:''}
+                    ${r.vermogen?`<strong>${r.vermogen} HP</strong>`:'— HP'}
+                    ${r.koppel?` · ${r.koppel} Nm`:''}
+                    ${r.carbu?` · <span style="color:#6b7280">${esc(r.carbu)}</span>`:''}
+                    ${heeftCurve?` <span title="Curvepunten beschikbaar" style="color:#10b981;font-size:11px">📈</span>`:''}
+                    ${gesel?` <span style="color:${geselecteerd.find(g=>g.run.id===r.id)?.kleur||'#2563eb'};font-weight:700">●</span>`:''}
                   </span>
                   <button class="run-rij-btn ${gesel?'verwijderen':'toevoegen'}"
                     onclick="toggleRun('${s.id}','${r.id}')">
-                    ${gesel?'âœ• Verwijder':'+ Toevoegen'}
+                    ${gesel?'✕ Verwijder':'+ Toevoegen'}
                   </button>
                 </div>`;
               }).join('')}
@@ -662,7 +662,7 @@ function renderEditorView(){
       return `
         <div class="sessie-blok">
           <div class="sessie-blok-head" onclick="toggleSessieOpen('${s.id}')">
-            <span class="open-pijl ${isOpen?'open':''}">â–¶</span>
+            <span class="open-pijl ${isOpen?'open':''}">▶</span>
             <span class="sessie-blok-motor">${esc(s.motorNummer)}</span>
             <span class="sessie-blok-meta">
               ${typeBadge(s.testType||'Test')}
@@ -677,9 +677,9 @@ function renderEditorView(){
 
     const groepen = new Map();
     for(const s of gefilterdNaFilter){
-      const merk  = s.motorMerk  || 'â€” Onbekend merk';
-      const type  = s.motorType  || 'â€” Onbekend type';
-      const klant = s.klant      || 'â€” Geen klant';
+      const merk  = s.motorMerk  || '— Onbekend merk';
+      const type  = s.motorType  || '— Onbekend type';
+      const klant = s.klant      || '— Geen klant';
       if(!groepen.has(merk)) groepen.set(merk, new Map());
       const merkMap = groepen.get(merk);
       if(!merkMap.has(type)) merkMap.set(type, new Map());
@@ -696,7 +696,7 @@ function renderEditorView(){
             <div class="groep-type-head">${esc(type)}</div>
             ${[...klanten.entries()].map(([klant, lijst])=>`
               <div>
-                ${klant!=='â€” Geen klant'?`<div class="groep-klant-head">${esc(klant)}</div>`:''}
+                ${klant!=='— Geen klant'?`<div class="groep-klant-head">${esc(klant)}</div>`:''}
                 ${lijst.map(renderSessie).join('')}
               </div>
             `).join('')}
@@ -711,16 +711,16 @@ function renderEditorView(){
 
   main.innerHTML = `
     <div class="editor-header">
-      <button class="terug-btn" onclick="gaNaarLijst()">â† Terug</button>
+      <button class="terug-btn" onclick="gaNaarLijst()">← Terug</button>
       <span style="font-size:15px;font-weight:800;color:#111827;flex:1">${esc(huidigeNaam||'Nieuwe analyse')}</span>
     </div>
     ${vergelijkingHtml}
     ${selectieHtml}
     <div style="margin-bottom:12px">
-      <input class="inp" id="zoek-inp" value="${esc(zoek)}" placeholder="ðŸ”  Zoek op motor, klant, merk...">
+      <input class="inp" id="zoek-inp" value="${esc(zoek)}" placeholder="🔍  Zoek op motor, klant, merk...">
     </div>
     ${merkTilesHtml}
-    ${filterMerk || zoekActief ? `${!zoekActief ? typeTilesHtml : ''}<div class="sec-label" style="margin-top:4px">Selecteer runs om te vergelijken (ðŸ“ˆ = curvepunten beschikbaar)</div>${sessieLijst}` : ''}`;
+    ${filterMerk || zoekActief ? `${!zoekActief ? typeTilesHtml : ''}<div class="sec-label" style="margin-top:4px">Selecteer runs om te vergelijken (📈 = curvepunten beschikbaar)</div>${sessieLijst}` : ''}`;
 
   const zoekInp = document.getElementById('zoek-inp');
   zoekInp?.addEventListener('input', e => {
@@ -743,7 +743,7 @@ function renderEditorView(){
   if(geselecteerd.length>=2) setTimeout(()=>tekenLijnChart(),0);
 }
 
-// â”€â”€ VERGELIJKING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── VERGELIJKING ──────────────────────────────────────────────────────────────
 function renderVergelijking(){
   const cols = geselecteerd.map((g)=>{
     const r = g.run;
@@ -753,22 +753,22 @@ function renderVergelijking(){
       label: `${esc(s.motorNummer)}${tnr?' #'+tnr:''}`,
       kleur: g.kleur,
       motor: esc(s.motorNummer),
-      klant: esc(s.klant||'â€”'),
-      datum: r.datum ? fmtDt(r.datum) : 'â€”',
-      testNr: tnr||'â€”',
+      klant: esc(s.klant||'—'),
+      datum: r.datum ? fmtDt(r.datum) : '—',
+      testNr: tnr||'—',
       testType: s.testType||'Test',
-      uitkomst: s.uitkomst||'â€”',
+      uitkomst: s.uitkomst||'—',
       vermogen: r.vermogen||null,
       vermogenRpm: r.vermogenRpm||null,
       koppel: r.koppel||null,
       koppelRpm: r.koppelRpm||null,
       maxRpm: r.toeren||null,
-      carbu: r.carbu||s.carbu||'â€”',
-      vanBaanH: s.carbuVanBaanHoog||'â€”',
-      vanBaanL: s.carbuVanBaanLaag||'â€”',
-      testH: s.carbuTestHoog||'â€”',
-      testL: s.carbuTestLaag||'â€”',
-      opmerkingen: r.opmerkingen||'â€”',
+      carbu: r.carbu||s.carbu||'—',
+      vanBaanH: s.carbuVanBaanHoog||'—',
+      vanBaanL: s.carbuVanBaanLaag||'—',
+      testH: s.carbuTestHoog||'—',
+      testL: s.carbuTestLaag||'—',
+      opmerkingen: r.opmerkingen||'—',
     };
   });
 
@@ -778,7 +778,7 @@ function renderVergelijking(){
 
   const header = cols.map(c=>`<th><span style="display:flex;align-items:center;gap:6px"><span class="kleur-dot" style="background:${c.kleur}"></span>${c.label}</span></th>`).join('');
 
-  const rij = (lbl,veld,beste=null,fmt=v=>v??'â€”')=>`
+  const rij = (lbl,veld,beste=null,fmt=v=>v??'—')=>`
     <tr class="rij-label">
       <td>${lbl}</td>
       ${cols.map((c,i)=>{
@@ -798,19 +798,19 @@ function renderVergelijking(){
         ${rij('Datum','datum')}
         ${rij('Test #','testNr')}
         ${rij('Type',null,null,(_,i)=>typeBadge(cols[i]?.testType||'Test'))}
-        ${rij('Uitkomst',null,null,(_,i)=>badge(cols[i]?.uitkomst||'â€”'))}
+        ${rij('Uitkomst',null,null,(_,i)=>badge(cols[i]?.uitkomst||'—'))}
         <tr><td colspan="${cols.length+1}" style="background:#f3f4f6;padding:4px 14px;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px">Meetresultaten</td></tr>
-        ${rij('Vermogen','vermogen',besteVerm,v=>v?`<strong>${v} HP</strong>`:'â€”')}
-        ${rij('@ RPM (verm.)','vermogenRpm',null,v=>v?`${Number(v).toLocaleString()} RPM`:'â€”')}
-        ${rij('Koppel','koppel',besteKoppel,v=>v?`<strong>${v} Nm</strong>`:'â€”')}
-        ${rij('@ RPM (koppel)','koppelRpm',null,v=>v?`${Number(v).toLocaleString()} RPM`:'â€”')}
-        ${rij('Max RPM','maxRpm',besteRpm,v=>v?Number(v).toLocaleString():'â€”')}
+        ${rij('Vermogen','vermogen',besteVerm,v=>v?`<strong>${v} HP</strong>`:'—')}
+        ${rij('@ RPM (verm.)','vermogenRpm',null,v=>v?`${Number(v).toLocaleString()} RPM`:'—')}
+        ${rij('Koppel','koppel',besteKoppel,v=>v?`<strong>${v} Nm</strong>`:'—')}
+        ${rij('@ RPM (koppel)','koppelRpm',null,v=>v?`${Number(v).toLocaleString()} RPM`:'—')}
+        ${rij('Max RPM','maxRpm',besteRpm,v=>v?Number(v).toLocaleString():'—')}
         <tr><td colspan="${cols.length+1}" style="background:#f3f4f6;padding:4px 14px;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px">Carburatie</td></tr>
         ${rij('Carbu (run)','carbu')}
-        ${rij('Van baan â€” Hoog','vanBaanH')}
-        ${rij('Van baan â€” Laag','vanBaanL')}
-        ${rij('Voor test â€” Hoog','testH')}
-        ${rij('Voor test â€” Laag','testL')}
+        ${rij('Van baan — Hoog','vanBaanH')}
+        ${rij('Van baan — Laag','vanBaanL')}
+        ${rij('Voor test — Hoog','testH')}
+        ${rij('Voor test — Laag','testL')}
         <tr><td colspan="${cols.length+1}" style="background:#f3f4f6;padding:4px 14px;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px">Opmerkingen</td></tr>
         ${rij('Opmerkingen','opmerkingen')}
       </tbody>
@@ -823,36 +823,36 @@ function renderVergelijking(){
 
   const geenCurveMsg = zonderCurve.length>0 ? `
     <div class="geen-curve-msg">
-      âš ï¸ <strong>${zonderCurve.map(g=>`${g.sessie.motorNummer}${testNr(g.run.bestandsnaam)?' #'+testNr(g.run.bestandsnaam):''}`).join(', ')}</strong>
-      ${zonderCurve.length===1?'heeft':'hebben'} geen curvepunten â€” herlaad de SPX om de lijngrafieken te zien.
+      ⚠️ <strong>${zonderCurve.map(g=>`${g.sessie.motorNummer}${testNr(g.run.bestandsnaam)?' #'+testNr(g.run.bestandsnaam):''}`).join(', ')}</strong>
+      ${zonderCurve.length===1?'heeft':'hebben'} geen curvepunten — herlaad de SPX om de lijngrafieken te zien.
     </div>` : '';
 
   return `
     <div id="vergelijking-sectie">
       <div class="verg-card">
         <div class="verg-titel">
-          ðŸ“ˆ Vermogenscurve
+          📈 Vermogenscurve
           <div class="toggle-wrap">
-            <button class="reset-zoom-btn" id="reset-zoom-btn" onclick="resetZoom()">â†º Reset zoom</button>
+            <button class="reset-zoom-btn" id="reset-zoom-btn" onclick="resetZoom()">↺ Reset zoom</button>
             <button class="toggle-btn actief" data-modus="hp" onclick="setLijnModus('hp')">HP</button>
             <button class="toggle-btn" data-modus="nm" onclick="setLijnModus('nm')">Nm</button>
           </div>
         </div>
         <div class="fs-open-wrap">
-          <button class="fs-open-btn" onclick="openVollescherm()">â›¶ Toon curve</button>
+          <button class="fs-open-btn" onclick="openVollescherm()">⛶ Toon curve</button>
         </div>
         <div class="chart-wrap chart-wrap-lijn"><canvas id="lijn-chart"></canvas></div>
         <div class="lijn-hover-panel" id="lijn-hover-panel"></div>
         ${geenCurveMsg}
       </div>
       <div class="verg-card">
-        <div class="verg-titel">ðŸ“‹ Vergelijkingstabel</div>
+        <div class="verg-titel">📋 Vergelijkingstabel</div>
         ${tabel}
       </div>
     </div>`;
 }
 
-// â”€â”€ LIJNGRAFIEKEN (HP of Nm vs RPM) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── LIJNGRAFIEKEN (HP of Nm vs RPM) ──────────────────────────────────────────
 
 // Lineaire interpolatie
 function lerpY(punten, rpm){
@@ -864,7 +864,7 @@ function lerpY(punten, rpm){
   return Math.round((y0+(rpm-x0)/(x1-x0)*(y1-y0))*10)/10;
 }
 
-// Moving-average smoothing â€” window van 7 punten (= 350 RPM) om ruis weg te filteren
+// Moving-average smoothing — window van 7 punten (= 350 RPM) om ruis weg te filteren
 function smoothArr(arr, win=7){
   const h=Math.floor(win/2);
   return arr.map((v,i)=>{
@@ -903,11 +903,11 @@ function tekenLijnChart(){
       if(pts.length>20){
         const pi=pts.reduce((mi,p,i)=>p.y>pts[mi].y?i:mi,0);
         if(pi>pts.length*0.2){
-          // Volledige curve: grote spikes (â‰¥0.4 HP) afknippen
+          // Volledige curve: grote spikes (≥0.4 HP) afknippen
           for(let i=pi+1;i<pts.length;i++){
             if(pts[i].y>pts[i-1].y+0.4){pts=pts.slice(0,i);break;}
           }
-          // Laatste 20 punten: ook kleine spikes (â‰¥0.2 HP) afknippen
+          // Laatste 20 punten: ook kleine spikes (≥0.2 HP) afknippen
           const checkVan=Math.max(pi+1, pts.length-20);
           for(let i=checkVan;i<pts.length;i++){
             if(pts[i].y>pts[i-1].y+0.2){pts=pts.slice(0,i);break;}
@@ -921,18 +921,18 @@ function tekenLijnChart(){
     const ctx2=canvas.getContext('2d');
     ctx2.clearRect(0,0,canvas.width,canvas.height);
     ctx2.fillStyle='#9ca3af'; ctx2.font='14px Inter,system-ui,sans-serif'; ctx2.textAlign='center';
-    ctx2.fillText('Geen curvepunten beschikbaar â€” herlaad de SPX-bestanden',canvas.width/2,canvas.height/2);
+    ctx2.fillText('Geen curvepunten beschikbaar — herlaad de SPX-bestanden',canvas.width/2,canvas.height/2);
     return;
   }
 
-  // Gemeenschappelijk RPM-raster (50 RPM stappen) â€” alle runs op exact dezelfde x-waarden
+  // Gemeenschappelijk RPM-raster (50 RPM stappen) — alle runs op exact dezelfde x-waarden
   const alleRpm = runPunten.flatMap(({pts})=>pts.map(p=>p.x));
   const minRpm = Math.floor(Math.min(...alleRpm)/500)*500;
   const maxRpm = Math.ceil(Math.max(...alleRpm)/500)*500;
   const raster = [];
   for(let rpm=minRpm; rpm<=maxRpm; rpm+=50) raster.push(rpm);
 
-  // Interpoleer elke run op het raster â†’ null buiten het RPM-bereik van die run
+  // Interpoleer elke run op het raster → null buiten het RPM-bereik van die run
   const datasets = runPunten.map(({g,pts})=>{
     const tnr = testNr(g.run.bestandsnaam);
     const naam = g.sessie.motorNaam || g.sessie.klant || g.sessie.motorNummer;
@@ -955,7 +955,7 @@ function tekenLijnChart(){
   _chartDatasets = datasets;
   _chartYLabel = yLabel;
 
-  // Crosshair plugin â€” tekent een verticale stippellijn bij hover
+  // Crosshair plugin — tekent een verticale stippellijn bij hover
   const crosshairPlugin = {
     id:'crosshair',
     afterDraw(chart){
@@ -1018,7 +1018,7 @@ function tekenLijnChart(){
               const diff = maxVal!==null ? Math.round((val-maxVal)*10)/10 : null;
               const diffHtml = diff!==null && diff!==0
                 ? `<span class="lijn-hover-diff">${diff>0?'+':''}${diff} ${yLabel}</span>`
-                : `<span class="lijn-hover-best">â–²</span>`;
+                : `<span class="lijn-hover-best">▲</span>`;
               html+=`<div class="lijn-hover-row">
                 <span class="lijn-hover-dash" style="background:${dp.dataset.borderColor}"></span>
                 <span class="lijn-hover-lbl">${dp.dataset.label}</span>
@@ -1105,7 +1105,7 @@ function addTouchCrosshair(canvasEl, chart, raster){
   canvasEl.addEventListener('touchend', e=>{
     e.preventDefault();
     prev = cp(e.touches);
-    // Crosshair blijft staan op laatste positie â€” niet verbergen bij loslaten
+    // Crosshair blijft staan op laatste positie — niet verbergen bij loslaten
   },{passive:false});
 }
 
@@ -1153,7 +1153,7 @@ function tekenFsChart(canvasEl){
             for(const dp of geldig){
               const val=dp.parsed.y;
               const diff=maxVal!==null?Math.round((val-maxVal)*10)/10:null;
-              const diffHtml=diff!==null&&diff!==0?`<span class="lijn-hover-diff">${diff>0?'+':''}${diff} ${yLabel}</span>`:`<span class="lijn-hover-best">â–²</span>`;
+              const diffHtml=diff!==null&&diff!==0?`<span class="lijn-hover-diff">${diff>0?'+':''}${diff} ${yLabel}</span>`:`<span class="lijn-hover-best">▲</span>`;
               html+=`<div class="lijn-hover-row"><span class="lijn-hover-dash" style="background:${dp.dataset.borderColor}"></span><span class="lijn-hover-lbl">${dp.dataset.label}</span><span class="lijn-hover-val">${val} ${yLabel}</span>${diffHtml}</div>`;
             }
             html+='</div>';
@@ -1181,13 +1181,13 @@ function openVollescherm(){
   el.id = 'grafiek-fs';
   el.innerHTML = `
     <div class="fs-header">
-      <span class="fs-titel">ðŸ“ˆ ${_chartYLabel} vs RPM</span>
+      <span class="fs-titel">📈 ${_chartYLabel} vs RPM</span>
       <div class="fs-zoom-groep">
-        <button class="fs-zoom-btn" onclick="fsZoomUit()" title="Uitzoomen">ðŸ”âˆ’</button>
-        <button class="fs-zoom-btn" onclick="fsZoomIn()"  title="Inzoomen">ðŸ”+</button>
-        <button class="fs-zoom-btn" onclick="fsZoomReset()" title="Reset zoom" style="font-size:13px;padding:6px 10px">â†º</button>
+        <button class="fs-zoom-btn" onclick="fsZoomUit()" title="Uitzoomen">🔍−</button>
+        <button class="fs-zoom-btn" onclick="fsZoomIn()"  title="Inzoomen">🔍+</button>
+        <button class="fs-zoom-btn" onclick="fsZoomReset()" title="Reset zoom" style="font-size:13px;padding:6px 10px">↺</button>
       </div>
-      <button class="fs-sluit-btn" onclick="sluitVollescherm()">âœ• Sluiten</button>
+      <button class="fs-sluit-btn" onclick="sluitVollescherm()">✕ Sluiten</button>
     </div>
     <div class="fs-chart-wrap">
       <canvas id="lijn-chart-fs"></canvas>
@@ -1225,9 +1225,9 @@ function genAnalyseNaam(){
     g.sessie.motorNaam||g.sessie.klant||g.sessie.motorNummer
   ).filter(Boolean))];
   const datum = new Date().toLocaleDateString('nl-NL',{day:'2-digit',month:'short'});
-  if(!motors.length) return `Analyse Â· ${datum}`;
-  if(motors.length<=2) return `${motors.join(' & ')} Â· ${datum}`;
-  return `${motors[0]} +${motors.length-1} Â· ${datum}`;
+  if(!motors.length) return `Analyse · ${datum}`;
+  if(motors.length<=2) return `${motors.join(' & ')} · ${datum}`;
+  return `${motors[0]} +${motors.length-1} · ${datum}`;
 }
 
 function startAnalyse(){
@@ -1265,7 +1265,7 @@ function scrollNaarVergelijking(){
   document.getElementById('vergelijking-sectie')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-// â”€â”€ ANALYSE BEHEER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ANALYSE BEHEER ────────────────────────────────────────────────────────────
 function nieuweAnalyse(){
   huidigeAnalyseId = null;
   huidigeNaam = '';
@@ -1323,10 +1323,10 @@ function gaNaarLijst(){
   window.scrollTo(0,0);
 }
 
-// â”€â”€ AUTH + INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── AUTH + INIT ────────────────────────────────────────────────────────────────
 async function laadEnToon(){
   document.getElementById('login-screen').classList.remove('active');
-  document.getElementById('main').innerHTML='<div class="loading">â³ Laden...</div>';
+  document.getElementById('main').innerHTML='<div class="loading">⏳ Laden...</div>';
   document.getElementById('db-status').innerHTML='<span class="db-dot" style="background:#10b981"></span>Supabase';
   sessies = await dbLoad();
   loadAnalyseOpgeslagen(); // localStorage als snelle eerste weergave
@@ -1350,7 +1350,3 @@ init();
 </script>
 </body>
 </html>
-
-
-
-
