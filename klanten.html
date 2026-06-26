@@ -328,6 +328,29 @@ document.getElementById('main').addEventListener('click', e => {
   else if (action === 'bekijk') openSessieInMain(el.dataset.id);
 });
 
+// ── REALTIME ──────────────────────────────────────────────────────────────────
+function startRealtime() {
+  if (!sb) return;
+  sb.channel('sessies-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'sessies' }, payload => {
+      if (payload.eventType === 'INSERT') {
+        const nieuw = fromRow(payload.new);
+        if (!sessies.find(s => s.id === nieuw.id)) sessies = [nieuw, ...sessies];
+      } else if (payload.eventType === 'UPDATE') {
+        const bijgewerkt = fromRow(payload.new);
+        sessies = sessies.map(s => s.id === bijgewerkt.id ? bijgewerkt : s);
+      } else if (payload.eventType === 'DELETE') {
+        sessies = sessies.filter(s => s.id !== payload.old.id);
+        if (selectedKlant && !sessies.find(s => s.klant === selectedKlant)) {
+          view = 'klanten'; selectedKlant = null;
+        }
+      }
+      if (view === 'klant-detail') renderKlantDetail();
+      else renderKlanten();
+    })
+    .subscribe();
+}
+
 // ── AUTH + INIT ───────────────────────────────────────────────────────────────
 async function doLogout() {
   document.getElementById('nav-dropdown')?.classList.remove('open');
@@ -342,6 +365,7 @@ async function init() {
   document.getElementById('db-status').innerHTML = '<span class="db-dot" style="background:#10b981"></span>Supabase';
   const [data] = await Promise.all([dbLoad(), dbMotorenLoad()]);
   sessies = data || [];
+  startRealtime();
   restoreKlantState();
   // Valideer: als klant niet meer bestaat, val terug naar overzicht
   if (view === 'klant-detail') {

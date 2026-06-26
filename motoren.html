@@ -579,6 +579,25 @@ async function saveMotorNieuw(){
   selectedMotor=getMotorData(mn);navigeer('motor-detail');
 }
 
+// ── REALTIME ──────────────────────────────────────────────────────────────────
+function startRealtime(){
+  if(!sb) return;
+  sb.channel('sessies-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'sessies'},payload=>{
+      if(payload.eventType==='INSERT'){
+        const nieuw=fromRow(payload.new);
+        if(!sessies.find(s=>s.id===nieuw.id)) sessies=[nieuw,...sessies];
+      } else if(payload.eventType==='UPDATE'){
+        const bijgewerkt=fromRow(payload.new);
+        sessies=sessies.map(s=>s.id===bijgewerkt.id?bijgewerkt:s);
+      } else if(payload.eventType==='DELETE'){
+        sessies=sessies.filter(s=>s.id!==payload.old.id);
+      }
+      render();
+    })
+    .subscribe();
+}
+
 // ── AUTH + INIT ───────────────────────────────────────────────────────────────
 async function doLogout(){
   document.getElementById('nav-dropdown')?.classList.remove('open');
@@ -593,6 +612,7 @@ async function init(){
   document.getElementById('db-status').innerHTML='<span class="db-dot" style="background:#10b981"></span>Supabase';
   const[data]=await Promise.all([dbLoad(),dbMotorenLoad()]);
   sessies=data||[];
+  startRealtime();
   const openMotor=localStorage.getItem('tbp_open_motor');
   if(openMotor){
     localStorage.removeItem('tbp_open_motor');
