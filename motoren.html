@@ -384,7 +384,7 @@ function renderMotoren(){
     const groepMap={};
     lijst.forEach(m=>{const key=[m.motorMerk,m.motorType].filter(Boolean).join(' · ')||'(onbekend type)';if(!groepMap[key])groepMap[key]=[];groepMap[key].push(m);});
     return Object.entries(groepMap).sort(([a],[b])=>natKey(a).localeCompare(natKey(b))).map(([groepNaam,motors])=>{
-      const ingeklapt=dfkIngeklapt.has(groepNaam);
+      const ingeklapt=!dfkIngeklapt.has(groepNaam);
       const safeKey=groepNaam.replace(/'/g,"\\'");
       return`<div style="margin-bottom:12px">
         <div onclick="dfkGroepToggle('${safeKey}')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border:1.5px solid #e5e7eb;border-radius:${ingeklapt?'10px':'10px 10px 0 0'}">
