@@ -331,14 +331,22 @@ function customConfirm({titel='',tekst='',icoon='',bevestig='OK',bevestigKleur='
 function toggleNav(){ document.getElementById('nav-dropdown').classList.toggle('open'); }
 document.addEventListener('click',e=>{ if(!e.target.closest('.nav-wrap')) document.getElementById('nav-dropdown')?.classList.remove('open'); });
 
-function doLogout(){
-  if(typeof supabase!=='undefined') supabase.auth.signOut().catch(()=>{});
+async function doLogout(){
+  try{ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); await sb.auth.signOut(); }catch{}
   window.location.href='index.html';
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-laadCarbus();
-render();
+async function init(){
+  try{
+    const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){window.location.href='index.html';return;}
+  }catch{window.location.href='index.html';return;}
+  laadCarbus();
+  render();
+}
+init();
 </script>
 </body>
 </html>

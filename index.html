@@ -933,9 +933,9 @@ function renderLijst(){
     });
   }
   document.getElementById('main').innerHTML=h;
-  document.getElementById('zinput').addEventListener('input',e=>{const pos=e.target.selectionStart;zoek=e.target.value;renderLijst();const inp=document.getElementById('zinput');if(inp){inp.focus();inp.setSelectionRange(pos,pos);}});
-  document.getElementById('ftype').addEventListener('change',e=>{filterType=e.target.value;renderLijst();});
-  document.getElementById('fuit').addEventListener('change',e=>{filterUitkomst=e.target.value;renderLijst();});
+  document.getElementById('zinput')?.addEventListener('input',e=>{const pos=e.target.selectionStart;zoek=e.target.value;renderLijst();const inp=document.getElementById('zinput');if(inp){inp.focus();inp.setSelectionRange(pos,pos);}});
+  document.getElementById('ftype')?.addEventListener('change',e=>{filterType=e.target.value;renderLijst();});
+  document.getElementById('fuit')?.addEventListener('change',e=>{filterUitkomst=e.target.value;renderLijst();});
   document.getElementById('upzone').addEventListener('click',()=>document.getElementById('file-input').click());
 }
 

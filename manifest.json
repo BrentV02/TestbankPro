@@ -2,7 +2,8 @@
   "name": "ProDynoDFK",
   "short_name": "ProDynoDFK",
   "icons": [
-    { "src": "logos/dfk-icon.png", "sizes": "any", "type": "image/png", "purpose": "any maskable" }
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" },
+    { "src": "logos/dfk-enginges-icon.png", "sizes": "any", "type": "image/png", "purpose": "any maskable" }
   ],
   "start_url": "index.html",
   "display": "standalone",

@@ -78,8 +78,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
       <button class="nav-toggle" id="nav-toggle" onclick="toggleNav()">☰ <span class="btn-lbl" style="font-size:13px">Menu</span></button>
       <div class="nav-dropdown" id="nav-dropdown">
         <div class="nav-header">Navigatie</div>
-        <button class="nav-item" onclick="gaNaar('sessies')">Sessies</button>
-        <button class="nav-item" onclick="gaNaar('motoren')">Motoren</button>
+        <button class="nav-item" onclick="window.location.href='index.html'">Sessies</button>
+        <button class="nav-item" onclick="window.location.href='motoren.html'">Motoren</button>
         <button class="nav-item active" onclick="navigeer('klanten')">Klanten</button>
         <button class="nav-item" onclick="window.location.href='analyse.html'">Analyse</button>
         <button class="nav-item" onclick="window.location.href='carburators.html'">Carburatoren</button>
@@ -153,10 +153,6 @@ async function dbMotorenLoad() {
 // ── NAVIGATIE ─────────────────────────────────────────────────────────────────
 function toggleNav() { document.getElementById('nav-dropdown').classList.toggle('open'); }
 document.addEventListener('click', e => { if(!e.target.closest('.nav-wrap')) document.getElementById('nav-dropdown')?.classList.remove('open'); });
-function gaNaar(pagina) {
-  localStorage.setItem('tbp_nav_target', pagina);
-  window.location.href = 'index.html';
-}
 function openMotorInMain(mn) {
   localStorage.setItem('tbp_open_motor', mn);
   window.location.href = 'motoren.html';
