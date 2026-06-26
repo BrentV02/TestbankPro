@@ -87,6 +87,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .lijn-hover-dash{width:14px;height:3px;border-radius:2px;flex-shrink:0}
 .lijn-hover-lbl{color:#94a3b8;font-size:12px}
 .lijn-hover-val{font-weight:700;color:#f1f5f9}
+.lijn-hover-diff{font-size:11px;font-weight:600;color:#f87171;margin-left:2px}
+.lijn-hover-best{font-size:11px;color:#34d399;margin-left:2px}
 /* Vergelijkingstabel */
 .vtbl{width:100%;border-collapse:collapse;font-size:13px}
 .vtbl th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;background:#f9fafb;border-bottom:1.5px solid #e5e7eb}
@@ -607,13 +609,20 @@ function tekenLijnChart(){
             const tt = context.tooltip;
             if(!tt.dataPoints?.length || tt.opacity===0){panel.style.display='none';return;}
             const rpm = raster[tt.dataPoints[0].dataIndex];
+            const geldig = tt.dataPoints.filter(dp=>dp.parsed.y!==null);
+            const maxVal = geldig.length ? Math.max(...geldig.map(dp=>dp.parsed.y)) : null;
             let html=`<div class="lijn-hover-rpm">${Number(rpm).toLocaleString()} RPM</div><div class="lijn-hover-rows">`;
-            for(const dp of tt.dataPoints){
-              if(dp.parsed.y===null) continue; // run heeft geen data op dit RPM
+            for(const dp of geldig){
+              const val = dp.parsed.y;
+              const diff = maxVal!==null ? Math.round((val-maxVal)*10)/10 : null;
+              const diffHtml = diff!==null && diff!==0
+                ? `<span class="lijn-hover-diff">${diff>0?'+':''}${diff} ${yLabel}</span>`
+                : `<span class="lijn-hover-best">▲</span>`;
               html+=`<div class="lijn-hover-row">
                 <span class="lijn-hover-dash" style="background:${dp.dataset.borderColor}"></span>
                 <span class="lijn-hover-lbl">${dp.dataset.label}</span>
-                <span class="lijn-hover-val">${dp.parsed.y} ${yLabel}</span>
+                <span class="lijn-hover-val">${val} ${yLabel}</span>
+                ${diffHtml}
               </div>`;
             }
             html+='</div>';
