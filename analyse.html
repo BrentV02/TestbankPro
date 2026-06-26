@@ -518,7 +518,7 @@ function tekenLijnChart(){
         backgroundColor: 'transparent',
         borderWidth: 2.5,
         pointRadius: 0,
-        tension: 0.3,
+        tension: 0.4,
         fill: false,
       };
     });
@@ -572,6 +572,7 @@ function tekenLijnChart(){
           grid: {color:'#f3f4f6'}
         },
         y: {
+          min: 0,
           title: {display:true, text:yLabel, font:{family:'Inter,system-ui,sans-serif',size:12}, color:'#6b7280'},
           ticks: {font:{family:'Inter,system-ui,sans-serif'}},
           grid: {color:'#f3f4f6'}
