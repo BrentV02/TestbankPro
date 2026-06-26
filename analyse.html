@@ -809,10 +809,12 @@ function renderVergelijking(){
           📈 Vermogenscurve
           <div class="toggle-wrap">
             <button class="reset-zoom-btn" id="reset-zoom-btn" onclick="resetZoom()">↺ Reset zoom</button>
-            <button class="fs-open-btn" onclick="openVollescherm()">⛶ Fullscreen</button>
             <button class="toggle-btn actief" data-modus="hp" onclick="setLijnModus('hp')">HP</button>
             <button class="toggle-btn" data-modus="nm" onclick="setLijnModus('nm')">Nm</button>
           </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <button class="fs-open-btn" onclick="openVollescherm()">⛶ Fullscreen</button>
         </div>
         <div class="chart-wrap chart-wrap-lijn"><canvas id="lijn-chart"></canvas></div>
         <div class="lijn-hover-panel" id="lijn-hover-panel"></div>
@@ -946,8 +948,8 @@ function tekenLijnChart(){
       plugins: {
         zoom: {
           zoom: {
-            wheel: {enabled:true, speed:0.08},
-            pinch: {enabled:true},
+            wheel: {enabled:true, speed:0.04},
+            pinch: {enabled:true, sensitivity:50},
             mode: 'x',
             onZoomComplete: ()=>{ document.getElementById('reset-zoom-btn')?.classList.add('zichtbaar'); }
           },
