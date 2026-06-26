@@ -520,6 +520,35 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('login-screen').classList.contains('active')) doLogin();
 });
 
+// ── REALTIME ──────────────────────────────────────────────────────────────────
+function startRealtime() {
+  if (!sb) return;
+  sb.channel('sessies-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'sessies' }, payload => {
+      if (payload.eventType === 'INSERT') {
+        const nieuw = fromRow(payload.new);
+        if (!sessies.find(s => s.id === nieuw.id)) {
+          sessies = [nieuw, ...sessies];
+          saveLocal();
+          if (view === 'lijst') renderLijst();
+        }
+      } else if (payload.eventType === 'UPDATE') {
+        const bijgewerkt = fromRow(payload.new);
+        sessies = sessies.map(s => s.id === bijgewerkt.id ? bijgewerkt : s);
+        if (selected?.id === bijgewerkt.id) selected = bijgewerkt;
+        saveLocal();
+        render();
+      } else if (payload.eventType === 'DELETE') {
+        const verwijderdId = payload.old.id;
+        sessies = sessies.filter(s => s.id !== verwijderdId);
+        if (selected?.id === verwijderdId) { selected = null; view = 'lijst'; }
+        saveLocal();
+        render();
+      }
+    })
+    .subscribe();
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function loadAndShow() {
   document.getElementById('main').innerHTML = '<div class="loading">⏳ Laden...</div>';
@@ -531,6 +560,7 @@ async function loadAndShow() {
     sessies = loadLocal();
     setDbStatus(false);
   }
+  startRealtime();
   showApp();
   // Terugkeer van klanten.html: open sessie, motor of specifieke pagina
   const openMotor = localStorage.getItem('tbp_open_motor');
