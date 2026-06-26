@@ -1018,21 +1018,56 @@ function resetZoom(){
 }
 
 function addTouchCrosshair(canvasEl, chart, raster){
-  const update = clientX => {
+  let prev = null;
+  const cp = list => Array.from(list).map(t=>({x:t.clientX, y:t.clientY}));
+
+  const updateCrosshair = clientX => {
     const rect = canvasEl.getBoundingClientRect();
     const x = clientX - rect.left;
     const idx = Math.max(0, Math.min(raster.length-1, Math.round(chart.scales.x.getValueForPixel(x))));
-    chart.tooltip.setActiveElements(chart.data.datasets.map((_,di)=>({datasetIndex:di,index:idx})), {x,y:0});
+    chart.tooltip.setActiveElements(chart.data.datasets.map((_,di)=>({datasetIndex:di,index:idx})),{x,y:0});
     chart.update('none');
   };
-  canvasEl.addEventListener('touchstart', e=>{ if(e.touches.length===1){e.preventDefault();update(e.touches[0].clientX);} },{passive:false});
-  canvasEl.addEventListener('touchmove',  e=>{ if(e.touches.length===1){e.preventDefault();update(e.touches[0].clientX);} },{passive:false});
-  canvasEl.addEventListener('touchend',   e=>{
-    if(e.touches.length===0){
-      chart.tooltip.setActiveElements([],{x:0,y:0});
-      chart.update('none');
-      const p=document.getElementById('lijn-hover-panel-fs'); if(p) p.style.display='none';
+  const hideCrosshair = () => {
+    chart.tooltip.setActiveElements([],{x:0,y:0});
+    chart.update('none');
+    const p=document.getElementById('lijn-hover-panel-fs'); if(p) p.style.display='none';
+  };
+
+  canvasEl.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    prev = cp(e.touches);
+    if(e.touches.length===1) updateCrosshair(e.touches[0].clientX);
+    else hideCrosshair();
+  },{passive:false});
+
+  canvasEl.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    const cur = cp(e.touches);
+    if(e.touches.length===1){
+      updateCrosshair(e.touches[0].clientX);
+    } else if(e.touches.length===2 && prev?.length===2){
+      hideCrosshair();
+      // Pan: middelpunt verschuiving
+      const midCur  = (cur[0].x+cur[1].x)/2;
+      const midPrev = (prev[0].x+prev[1].x)/2;
+      const dx = midPrev - midCur;
+      if(Math.abs(dx)>0.5){ try{chart.pan({x:-dx});}catch(_){} }
+      // Zoom: sterk gedempt (15% van ruwe factor)
+      const dCur  = Math.hypot(cur[1].x-cur[0].x, cur[1].y-cur[0].y);
+      const dPrev = Math.hypot(prev[1].x-prev[0].x, prev[1].y-prev[0].y);
+      if(dPrev>20 && Math.abs(dCur-dPrev)>4){
+        const factor = 1+(dPrev/dCur-1)*0.15;
+        try{chart.zoom({x:factor});}catch(_){}
+      }
     }
+    prev = cur;
+  },{passive:false});
+
+  canvasEl.addEventListener('touchend', e=>{
+    e.preventDefault();
+    prev = cp(e.touches);
+    if(e.touches.length===0) hideCrosshair();
   },{passive:false});
 }
 
@@ -1061,8 +1096,8 @@ function tekenFsChart(canvasEl){
       interaction:{mode:'index',intersect:false},
       plugins:{
         zoom:{
-          zoom:{wheel:{enabled:false},pinch:{enabled:true},mode:'x'},
-          pan:{enabled:true,mode:'x'},
+          zoom:{wheel:{enabled:false},pinch:{enabled:false},mode:'x'},
+          pan:{enabled:false,mode:'x'},
           limits:{x:{min:'original',max:'original'}}
         },
         legend:{position:'top',labels:{font:{family:'Inter,system-ui,sans-serif',size:12},color:'#cbd5e1',padding:14,boxWidth:20,boxHeight:3,usePointStyle:true,pointStyle:'line'}},
