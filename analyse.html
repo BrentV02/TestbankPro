@@ -489,6 +489,17 @@ function renderVergelijking(){
 }
 
 // ── LIJNGRAFIEKEN (HP of Nm vs RPM) ──────────────────────────────────────────
+
+// Lineaire interpolatie: geef de y-waarde op een bepaald RPM punt
+function lerpY(punten, rpm){
+  if(!punten.length||rpm<punten[0].x||rpm>punten[punten.length-1].x) return null;
+  let lo=0, hi=punten.length-1;
+  while(hi-lo>1){const m=(lo+hi)>>1; if(punten[m].x<=rpm) lo=m; else hi=m;}
+  const {x:x0,y:y0}=punten[lo], {x:x1,y:y1}=punten[hi];
+  if(x1===x0) return y0;
+  return Math.round((y0+(rpm-x0)/(x1-x0)*(y1-y0))*10)/10;
+}
+
 function tekenLijnChart(){
   const canvas = document.getElementById('lijn-chart');
   if(!canvas) return;
@@ -497,59 +508,62 @@ function tekenLijnChart(){
   const isHp = lijnModus==='hp';
   const yLabel = isHp ? 'HP' : 'Nm';
 
-  // Bouw datasets — alleen runs mét curvedata
-  const datasets = geselecteerd
+  // Bouw gesorteerde puntenarrays per run
+  const runPunten = geselecteerd
     .filter(g=>(g.run.curveData||[]).length>0)
     .map(g=>{
-      const r = g.run;
-      const s = g.sessie;
-      const tnr = testNr(r.bestandsnaam);
-      const rawCurve = r.curveData||[];
-      // Auto-detectie: oude opgeslagen data heeft HP in Watts (>100) → omzetten
+      const rawCurve = g.run.curveData||[];
       const maxHp = Math.max(...rawCurve.map(p=>p.hp||0));
       const isWatts = maxHp > 100;
-      let punten = rawCurve.map(p=>({
+      let pts = rawCurve.map(p=>({
         x: p.rpm,
         y: isHp
           ? (isWatts ? Math.round(p.hp/745.7*10)/10 : p.hp)
           : (isWatts ? Math.round(p.nm/10*10)/10 : p.nm)
       }));
-      // Spike-detectie op de gerenderde punten: na het piekpunt elke stijging ≥0.4 afknippen
-      if(punten.length>20){
-        punten.sort((a,b)=>a.x-b.x);
-        const peakIdx=punten.reduce((pi,p,i)=>p.y>punten[pi].y?i:pi,0);
-        if(peakIdx>punten.length*0.2){
-          for(let i=peakIdx+1;i<punten.length;i++){
-            if(punten[i].y>punten[i-1].y+0.4){punten=punten.slice(0,i);break;}
+      pts.sort((a,b)=>a.x-b.x);
+      // Spike-detectie na piekpunt
+      if(pts.length>20){
+        const pi=pts.reduce((mi,p,i)=>p.y>pts[mi].y?i:mi,0);
+        if(pi>pts.length*0.2){
+          for(let i=pi+1;i<pts.length;i++){
+            if(pts[i].y>pts[i-1].y+0.4){pts=pts.slice(0,i);break;}
           }
         }
       }
-      return {
-        label: `${s.motorNummer}${tnr?' #'+tnr:''}`,
-        data: punten,
-        borderColor: g.kleur,
-        backgroundColor: 'transparent',
-        borderWidth: 2.5,
-        pointRadius: 0,
-        tension: 0.4,
-        fill: false,
-      };
+      return {g, pts};
     });
 
-  if(datasets.length===0){
-    const ctx2 = canvas.getContext('2d');
+  if(runPunten.length===0){
+    const ctx2=canvas.getContext('2d');
     ctx2.clearRect(0,0,canvas.width,canvas.height);
-    ctx2.fillStyle='#9ca3af';
-    ctx2.font='14px Inter,system-ui,sans-serif';
-    ctx2.textAlign='center';
+    ctx2.fillStyle='#9ca3af'; ctx2.font='14px Inter,system-ui,sans-serif'; ctx2.textAlign='center';
     ctx2.fillText('Geen curvepunten beschikbaar — herlaad de SPX-bestanden',canvas.width/2,canvas.height/2);
     return;
   }
 
-  // Bereken x-bereik
-  const alleRpm = datasets.flatMap(d=>d.data.map(p=>p.x));
+  // Gemeenschappelijk RPM-raster (50 RPM stappen) — alle runs op exact dezelfde x-waarden
+  const alleRpm = runPunten.flatMap(({pts})=>pts.map(p=>p.x));
   const minRpm = Math.floor(Math.min(...alleRpm)/500)*500;
   const maxRpm = Math.ceil(Math.max(...alleRpm)/500)*500;
+  const raster = [];
+  for(let rpm=minRpm; rpm<=maxRpm; rpm+=50) raster.push(rpm);
+
+  // Interpoleer elke run op het raster → null buiten het RPM-bereik van die run
+  const datasets = runPunten.map(({g,pts})=>{
+    const tnr = testNr(g.run.bestandsnaam);
+    return {
+      label: `${g.sessie.motorNummer}${tnr?' #'+tnr:''}`,
+      data: raster.map(rpm=>lerpY(pts,rpm)),
+      borderColor: g.kleur,
+      backgroundColor: 'transparent',
+      borderWidth: 2.5,
+      pointRadius: 0,
+      tension: 0.4,
+      fill: false,
+      spanGaps: false,
+    };
+  });
 
   // Crosshair plugin — tekent een verticale stippellijn bij hover
   const crosshairPlugin = {
@@ -573,27 +587,28 @@ function tekenLijnChart(){
 
   lineChartInstance = new Chart(canvas, {
     type: 'line',
-    data: {datasets},
+    data: {labels: raster, datasets},
     plugins: [crosshairPlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: {mode:'x', intersect:false},
+      interaction: {mode:'index', intersect:false},
       plugins: {
         legend: {
           position:'top',
           labels:{font:{family:'Inter,system-ui,sans-serif',size:12},padding:16,boxWidth:20,boxHeight:3,usePointStyle:true,pointStyle:'line'}
         },
         tooltip: {
-          enabled: false, // ingebouwde tooltip uit — eigen panel gebruiken
+          enabled: false,
           external(context){
             const panel = document.getElementById('lijn-hover-panel');
             if(!panel) return;
             const tt = context.tooltip;
             if(!tt.dataPoints?.length || tt.opacity===0){panel.style.display='none';return;}
-            const rpm = Math.round(tt.dataPoints[0].parsed.x/50)*50;
+            const rpm = raster[tt.dataPoints[0].dataIndex];
             let html=`<div class="lijn-hover-rpm">${Number(rpm).toLocaleString()} RPM</div><div class="lijn-hover-rows">`;
             for(const dp of tt.dataPoints){
+              if(dp.parsed.y===null) continue; // run heeft geen data op dit RPM
               html+=`<div class="lijn-hover-row">
                 <span class="lijn-hover-dash" style="background:${dp.dataset.borderColor}"></span>
                 <span class="lijn-hover-lbl">${dp.dataset.label}</span>
@@ -608,11 +623,8 @@ function tekenLijnChart(){
       },
       scales: {
         x: {
-          type: 'linear',
-          min: minRpm,
-          max: maxRpm,
           title: {display:true, text:'Motor RPM', font:{family:'Inter,system-ui,sans-serif',size:12}, color:'#6b7280'},
-          ticks: {font:{family:'Inter,system-ui,sans-serif'}, callback:v=>Number(v).toLocaleString(), maxTicksLimit:10},
+          ticks: {font:{family:'Inter,system-ui,sans-serif'}, callback:(_,i)=>i%20===0?Number(raster[i]).toLocaleString():null, maxRotation:0},
           grid: {color:'#f3f4f6'}
         },
         y: {
