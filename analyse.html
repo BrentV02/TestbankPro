@@ -555,7 +555,7 @@ function tekenLijnChart(){
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: {mode:'index', intersect:false},
+      interaction: {mode:'x', intersect:false},
       plugins: {
         legend: {
           position:'top',
@@ -564,7 +564,7 @@ function tekenLijnChart(){
         tooltip: {
           callbacks: {
             label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y} ${yLabel}`,
-            title: ctx=>`${Number(ctx[0].parsed.x).toLocaleString()} RPM`
+            title: ctx=>`${Number(Math.round(ctx[0].parsed.x/50)*50).toLocaleString()} RPM`
           }
         }
       },
