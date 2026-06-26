@@ -806,10 +806,10 @@ function renderVergelijking(){
     <div id="vergelijking-sectie">
       <div class="verg-card">
         <div class="verg-titel">
-          📈 Vermogenskromme
+          📈 Vermogenscurve
           <div class="toggle-wrap">
             <button class="reset-zoom-btn" id="reset-zoom-btn" onclick="resetZoom()">↺ Reset zoom</button>
-            <button class="fs-open-btn" onclick="openVollescherm()">⛶ Vollescherm</button>
+            <button class="fs-open-btn" onclick="openVollescherm()">⛶ Fullscreen</button>
             <button class="toggle-btn actief" data-modus="hp" onclick="setLijnModus('hp')">HP</button>
             <button class="toggle-btn" data-modus="nm" onclick="setLijnModus('nm')">Nm</button>
           </div>
@@ -1103,15 +1103,28 @@ function openVollescherm(){
   el.innerHTML = `
     <div class="fs-header">
       <span class="fs-titel">📈 ${_chartYLabel} vs RPM</span>
-      <button class="fs-sluit-btn" onclick="sluitVollescherm()">✕ Sluiten</button>
+      <button class="fs-sluit-btn" onclick="sluitVollescherm()">✕ Fullscreen sluiten</button>
     </div>
     <div class="fs-chart-wrap"><canvas id="lijn-chart-fs"></canvas></div>
     <div class="lijn-hover-panel" id="lijn-hover-panel-fs"></div>`;
   document.body.appendChild(el);
-  (el.requestFullscreen||document.documentElement.requestFullscreen).call(el.requestFullscreen?el:document.documentElement)
-    .then(()=>screen.orientation?.lock?.('landscape-primary').catch(()=>{}))
-    .catch(()=>{});
-  setTimeout(()=>tekenFsChart(document.getElementById('lijn-chart-fs')), 80);
+
+  const teken = () => {
+    const canvas = document.getElementById('lijn-chart-fs');
+    if(canvas) tekenFsChart(canvas);
+  };
+
+  // Probeer fullscreen; teken grafiek zodra layout klaar is
+  const fsEl = el.requestFullscreen ? el : document.documentElement;
+  const fsPromise = fsEl.requestFullscreen?.();
+  if(fsPromise){
+    fsPromise
+      .then(()=>{ screen.orientation?.lock?.('landscape-primary').catch(()=>{}); })
+      .catch(()=>{})
+      .finally(()=>requestAnimationFrame(()=>requestAnimationFrame(teken)));
+  } else {
+    requestAnimationFrame(()=>requestAnimationFrame(teken));
+  }
 }
 
 function sluitVollescherm(){
