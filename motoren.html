@@ -1,0 +1,609 @@
+﻿<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motoren — ProDynoDFK</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100vh;overflow-x:hidden}
+#header{background:#111827;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;gap:12px}
+.logo{display:flex;align-items:center;gap:12px;cursor:pointer;order:-1}
+.logo-name{font-weight:800;font-size:18px;letter-spacing:-0.5px}
+.btn{border:none;border-radius:8px;padding:7px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.btn:hover{opacity:.88}
+.btn-blue{background:#2563eb;color:#fff}
+.btn-blue-lg{background:#2563eb;color:#fff;padding:10px 24px;font-size:15px;border-radius:8px;border:none;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-outline{background:none;border:1.5px solid #e5e7eb;color:#374151;padding:10px 18px;font-size:15px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit}
+.btn-sm{background:none;border:1.5px solid #e5e7eb;border-radius:7px;padding:6px 14px;cursor:pointer;font-size:13px;color:#374151;font-weight:600;font-family:inherit;white-space:nowrap}
+.btn-sm:hover{border-color:#2563eb;color:#2563eb}
+.btn-back{background:none;border:none;cursor:pointer;color:#6b7280;font-size:20px;padding:0;font-family:inherit}
+#main{max-width:1060px;margin:0 auto;padding:24px 16px}
+.inp{border:1.5px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:14px;color:#111827;background:#fff;outline:none;font-family:inherit;width:100%}
+.inp:focus{border-color:#2563eb}
+.upload-zone{border:2px dashed #d1d5db;border-radius:12px;padding:16px 22px;margin-bottom:14px;background:#fff;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color .2s}
+.upload-zone:hover{border-color:#2563eb}
+.sessie-card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:12px;overflow:hidden}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;background:#f9fafb}
+.tbl td{padding:8px 12px;font-size:12px;border-top:1px solid #f3f4f6;vertical-align:middle}
+.tbl-border{border:1.5px solid #e5e7eb;border-radius:10px;overflow:hidden}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.badge{padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.badge-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.b-geslaagd{background:#d1fae5;color:#065f46}.b-geslaagd .badge-dot{background:#10b981}
+.b-afgekeurd{background:#fee2e2;color:#991b1b}.b-afgekeurd .badge-dot{background:#ef4444}
+.b-lopend{background:#fef3c7;color:#92400e}.b-lopend .badge-dot{background:#f59e0b}
+.tbadge{border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700;white-space:nowrap}
+.tb-test{background:#e0e7ff;color:#3730a3}
+.tb-inrijden{background:#fef3c7;color:#92400e}
+.tb-vermogenstest{background:#ede9fe;color:#5b21b6}
+.tb-afstelling{background:#fce7f3;color:#9d174d}
+.form-card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.1);padding:28px}
+.form-section{background:#f9fafb;border-radius:10px;padding:16px;margin-bottom:20px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field-label{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
+.error-box{background:#fee2e2;color:#991b1b;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:14px;font-weight:600}
+.actions-row{display:flex;gap:10px;flex-wrap:wrap}
+.head-row{display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.page-title{margin:0;font-size:19px;font-weight:800}
+.detail-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:18px}
+.detail-header-left{flex:1;min-width:0}
+.detail-meta{background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;display:inline-flex;flex-direction:column;gap:0;min-width:180px}
+.meta-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:4px 0;border-bottom:1px solid #f3f4f6}
+.meta-row:last-child{border-bottom:none}
+.meta-row-lbl{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.meta-row-val{font-size:13px;font-weight:600;color:#111827;text-align:right}
+.meta-row-val.klant{font-size:15px;color:#1d4ed8}
+.stat-mini{text-align:center;min-width:48px}
+.empty-state{background:#fff;border-radius:12px;text-align:center;padding:48px;color:#9ca3af;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.loading{text-align:center;padding:80px;color:#6b7280;font-size:15px}
+.db-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.nav-wrap{position:relative;flex-shrink:0;order:1}
+.nav-toggle{background:#374151;border:none;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;gap:7px;font-weight:700;font-family:inherit}
+.nav-toggle:hover{background:#4b5563}
+.nav-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#1f2937;border-radius:12px;min-width:230px;box-shadow:0 8px 32px rgba(0,0,0,.35);z-index:9999;display:none;overflow:hidden;border:1px solid #374151}
+.nav-dropdown.open{display:block}
+.nav-header{padding:10px 16px 8px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 16px;color:#d1d5db;cursor:pointer;font-size:14px;font-weight:600;border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .12s}
+.nav-item:hover{background:#374151;color:#fff}
+.nav-item.active{background:#1e3a5f;color:#60a5fa}
+.nav-item .nav-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.nav-divider{height:1px;background:#374151;margin:4px 0}
+@media(max-width:600px){
+  #header{height:auto;min-height:52px;padding:8px 12px;gap:8px}
+  #main{padding:12px 10px}
+  .form-card{padding:16px}
+  .form-grid{grid-template-columns:1fr}
+  .detail-header{flex-direction:column}
+  .detail-meta{width:100%}
+  .tbl th,.tbl td{padding:6px 8px;font-size:11px}
+  .actions-row{flex-direction:column}
+  .btn-blue-lg,.btn-outline{width:100%;text-align:center}
+  .page-title{font-size:16px}
+  .upload-zone{padding:12px 16px;gap:10px}
+  .btn-lbl{display:none}
+}
+</style>
+</head>
+<body>
+
+<header id="header">
+  <div style="display:flex;align-items:center;gap:10px;order:1;margin-left:auto">
+    <span id="sync-indicator" style="display:none;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#f59e0b;white-space:nowrap" title="Bezig met synchroniseren...">
+      <span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;animation:pulse 1.5s infinite"></span>
+      <span id="sync-indicator-text">niet gesync'd</span>
+    </span>
+    <span id="db-status" style="font-size:12px;color:#6b7280;display:flex;align-items:center;white-space:nowrap"></span>
+    <div class="nav-wrap">
+      <button class="nav-toggle" id="nav-toggle" onclick="toggleNav()">☰ <span class="btn-lbl" style="font-size:13px">Menu</span></button>
+      <div class="nav-dropdown" id="nav-dropdown">
+        <div class="nav-header">Navigatie</div>
+        <button class="nav-item" onclick="gaNaar('sessies')">Sessies</button>
+        <button class="nav-item active" onclick="navigeer('motoren')">Motoren</button>
+        <button class="nav-item" onclick="gaNaar('klanten')">Klanten</button>
+        <button class="nav-item" onclick="window.location.href='analyse.html'">Analyse</button>
+        <div class="nav-divider"></div>
+        <button class="nav-item" onclick="doLogout()">Afmelden</button>
+      </div>
+    </div>
+  </div>
+  <div class="logo" onclick="window.location.href='index.html'">
+    <img src="logos/dfk-logo.png" style="height:34px;object-fit:contain;background:#fff;border-radius:6px;padding:3px 6px">
+    <span class="logo-name">ProDynoDFK</span>
+  </div>
+</header>
+
+<div id="main"><div class="loading">⏳ Laden...</div></div>
+
+<script>
+const SUPABASE_URL = 'https://jonfknallwdyknxwcqww.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvbmZrbmFsbHdkeWtueHdjcXd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNDAwMjUsImV4cCI6MjA5NzgxNjAyNX0.A-uUnNT-Nlwf9ArAd56Ujml5A0XW6G0_mj8RE24On8A';
+
+let sb = null;
+let sessies = [];
+let motorenCache = {};
+let motorenUnsynced = new Set();
+let selectedMotor = null;
+let motorenTab = 'dfk';
+let motorenZoek = '';
+let dfkIngeklapt = new Set();
+let view = 'motoren';
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtDt = d => d ? new Date(d).toLocaleString('nl-NL',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+const bestRun = runs => runs?.reduce((b,r)=>{
+  if(!b) return r;
+  const vB=b.vermogen||0, vR=r.vermogen||0;
+  if(vR>vB) return r;
+  if(vR===vB && (r.koppel||0)>(b.koppel||0)) return r;
+  return b;
+},null)||null;
+const effectiefCarbu = s => bestRun(s.runs)?.carbu || s.carbu || '';
+function badge(s){
+  const c={Geslaagd:'b-geslaagd',Afgekeurd:'b-afgekeurd',Lopend:'b-lopend'}[s]||'b-lopend';
+  return '<span class="badge '+c+'"><span class="badge-dot"></span>'+esc(s)+'</span>';
+}
+function typeBadge(t){
+  const c={Inrijden:'tb-inrijden',Vermogenstest:'tb-vermogenstest',Afstelling:'tb-afstelling',Test:'tb-test'}[t]||'tb-test';
+  return '<span class="tbadge '+c+'">'+esc(t)+'</span>';
+}
+function uuid(){return crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)});}
+function acGet(key){
+  const vals=new Set();
+  Object.entries(motorenCache).forEach(([mn,m])=>{
+    if(key==='motorNummer') vals.add(mn);
+    else if(m[key]) vals.add(m[key]);
+  });
+  sessies.forEach(s=>{
+    const f={motorNummer:'motorNummer',klant:'klant',motorMerk:'motorMerk',motorType:'motorType',motorNaam:'motorNaam'}[key];
+    if(f&&s[f]) vals.add(s[f]);
+  });
+  return [...vals].sort((a,b)=>a.localeCompare(b,'nl',{numeric:true}));
+}
+function acInline(el,key,onAccept){
+  if(!el) return;
+  el.addEventListener('input',function(e){
+    if(e.inputType&&(e.inputType.startsWith('delete')||e.inputType==='insertFromPaste')) return;
+    const val=this.value; if(!val) return;
+    const match=acGet(key).find(s=>s.toLowerCase().startsWith(val.toLowerCase()));
+    if(!match) return;
+    if(match.toLowerCase()===val.toLowerCase()){if(onAccept) onAccept(match);return;}
+    const start=val.length;
+    this.value=match;
+    this.setSelectionRange(start,match.length);
+  });
+  el.addEventListener('keydown',function(e){
+    if((e.key==='Enter'||e.key==='Tab')&&this.selectionStart!==this.selectionEnd){
+      e.preventDefault();
+      const val=this.value;
+      this.value=val;
+      this.setSelectionRange(val.length,val.length);
+      if(onAccept) onAccept(val);
+    }
+  });
+}
+function showSbFout(msg){
+  let el=document.getElementById('sb-fout-banner');
+  if(!el){el=document.createElement('div');el.id='sb-fout-banner';el.style.cssText='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#fef2f2;border:1.5px solid #fca5a5;color:#991b1b;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;max-width:480px;box-shadow:0 4px 12px rgba(0,0,0,.12);display:flex;gap:12px;align-items:center';document.body.appendChild(el);}
+  el.innerHTML=`<span style="flex:1">${msg}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#991b1b">x</button>`;
+  setTimeout(()=>{if(el.parentElement)el.remove();},12000);
+}
+function customConfirm({titel,tekst,icoon='',bevestig='Verwijderen',bevestigKleur='#ef4444',onOk}){
+  document.getElementById('app-confirm')?.remove();
+  const el=document.createElement('div');
+  el.id='app-confirm';
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9998;display:flex;align-items:center;justify-content:center';
+  el.innerHTML=`<div style="background:#fff;border-radius:14px;padding:28px 32px;max-width:340px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);text-align:center">
+    ${icoon?`<div style="font-size:32px;margin-bottom:10px">${icoon}</div>`:''}
+    <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">${titel}</div>
+    ${tekst?`<div style="font-size:13px;color:#6b7280;margin-bottom:22px">${tekst}</div>`:'<div style="margin-bottom:22px"></div>'}
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="ac-cancel" style="padding:9px 20px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit">Annuleren</button>
+      <button class="ac-ok" style="padding:9px 20px;border:none;border-radius:8px;background:${bevestigKleur};color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit">${bevestig}</button>
+    </div></div>`;
+  el.querySelector('.ac-cancel').onclick=()=>el.remove();
+  el.querySelector('.ac-ok').onclick=()=>{el.remove();onOk();};
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  document.addEventListener('keydown',function esc2(e){if(e.key==='Escape'){el.remove();document.removeEventListener('keydown',esc2);}});
+  document.body.appendChild(el);
+  el.querySelector('.ac-ok').focus();
+}
+
+// ── DATABASE ──────────────────────────────────────────────────────────────────
+function fromRow(r){
+  return{id:r.id,motorNummer:r.motor_nummer,klant:r.klant||'',carbu:r.carbu||'',
+         testType:r.test_type||'Test',uitkomst:r.uitkomst||'Geslaagd',
+         opmerkingen:r.opmerkingen||'',runs:r.runs||[],
+         motorMerk:r.motor_merk||'',motorType:r.motor_type||'',motorNaam:r.motor_naam||''};
+}
+async function dbLoad(){
+  const{data,error}=await sb.from('sessies').select('*').order('created_at',{ascending:false});
+  if(error){console.error(error);return[];}
+  return data.map(fromRow);
+}
+function saveMotorenLocal(){try{localStorage.setItem('motorenCache',JSON.stringify(motorenCache));}catch(e){}}
+function loadMotorenLocal(){try{const s=localStorage.getItem('motorenCache');return s?JSON.parse(s):{};}catch{return{};}}
+function updateSyncIndicator(){
+  const el=document.getElementById('sync-indicator');
+  const txt=document.getElementById('sync-indicator-text');
+  if(!el)return;
+  if(motorenUnsynced.size>0){el.style.display='flex';txt.textContent=`${motorenUnsynced.size} motor${motorenUnsynced.size!==1?'s':''} niet gesync'd`;}
+  else el.style.display='none';
+}
+async function dbMotorenLoad(){
+  const local=loadMotorenLocal();
+  if(Object.keys(local).length)motorenCache={...local};
+  if(!sb)return;
+  const{data,error}=await sb.from('motoren').select('*');
+  if(error){console.error(error);showSbFout('Motoren laden mislukt: '+error.message);return;}
+  motorenCache={};
+  data.forEach(r=>{motorenCache[r.motor_nummer]={klant:r.klant||'',motorMerk:r.motor_merk||'',motorType:r.motor_type||'',motorNaam:r.motor_naam||'',status:r.status||'Actief'};});
+  motorenUnsynced.clear();
+  saveMotorenLocal();
+  updateSyncIndicator();
+}
+async function dbMotorSave(mn,d){
+  if(!mn)return;
+  motorenCache[mn]=d;motorenUnsynced.add(mn);saveMotorenLocal();updateSyncIndicator();
+  if(!sb)return;
+  const{error}=await sb.from('motoren').upsert({motor_nummer:mn,klant:d.klant||'',motor_merk:d.motorMerk||'',motor_type:d.motorType||'',motor_naam:d.motorNaam||'',status:d.status||'Actief',updated_at:new Date().toISOString()});
+  if(error){console.error(error);showSbFout('Motor opslaan mislukt: '+error.message);scheduleSyncRetry();}
+  else{motorenUnsynced.delete(mn);updateSyncIndicator();}
+}
+async function syncMotorenNaarSupabase(){
+  if(!sb)return;
+  for(const[mn,d]of Object.entries(motorenCache)){
+    const{error}=await sb.from('motoren').upsert({motor_nummer:mn,klant:d.klant||'',motor_merk:d.motorMerk||'',motor_type:d.motorType||'',motor_naam:d.motorNaam||'',status:d.status||'Actief',updated_at:new Date().toISOString()});
+    if(!error)motorenUnsynced.delete(mn);
+  }
+  updateSyncIndicator();
+}
+let _syncRetryTimer=null;
+function scheduleSyncRetry(){
+  if(_syncRetryTimer)return;
+  _syncRetryTimer=setTimeout(async()=>{_syncRetryTimer=null;if(!motorenUnsynced.size)return;await syncMotorenNaarSupabase();if(motorenUnsynced.size>0)scheduleSyncRetry();},5000);
+}
+async function dbSave(s){
+  if(!sb||!s.id)return;
+  await sb.from('sessies').upsert({id:s.id,motor_nummer:s.motorNummer,klant:s.klant||'',carbu:s.carbu||'',test_type:s.testType||'Test',uitkomst:s.uitkomst||'Geslaagd',opmerkingen:s.opmerkingen||'',runs:s.runs||[],motor_merk:s.motorMerk||'',motor_type:s.motorType||'',motor_naam:s.motorNaam||'',updated_at:new Date().toISOString()});
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+function saveMotorState(){
+  try{localStorage.setItem('tbp_motoren_view',JSON.stringify({view,selectedMotorNr:selectedMotor?.motorNummer||null,motorenTab,dfkIngeklapt:[...dfkIngeklapt]}));}catch(e){}
+}
+function restoreMotorState(){
+  try{
+    const s=JSON.parse(localStorage.getItem('tbp_motoren_view')||'{}');
+    if(s.view)view=s.view;
+    if(s.selectedMotorNr)selectedMotor=getMotorData(s.selectedMotorNr);
+    if(s.motorenTab)motorenTab=s.motorenTab;
+    if(s.dfkIngeklapt)dfkIngeklapt=new Set(s.dfkIngeklapt);
+    if(view==='motor-detail'&&!selectedMotor)view='motoren';
+    if(view==='motor-nieuw')view='motoren';
+  }catch(e){}
+}
+
+// ── NAVIGATIE ─────────────────────────────────────────────────────────────────
+function toggleNav(){document.getElementById('nav-dropdown').classList.toggle('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.nav-wrap'))document.getElementById('nav-dropdown')?.classList.remove('open');});
+function gaNaar(pagina){
+  if(pagina==='klanten')localStorage.removeItem('tbp_klanten_view');
+  localStorage.setItem('tbp_nav_target',pagina);
+  window.location.href='index.html';
+}
+function openSessieInMain(id){
+  localStorage.setItem('tbp_open_sessie',id);
+  localStorage.setItem('tbp_open_sessie_from','motoren');
+  if(selectedMotor)localStorage.setItem('tbp_open_sessie_motor',selectedMotor.motorNummer);
+  window.location.href='index.html';
+}
+function navigeer(v){
+  view=v;saveMotorState();render();window.scrollTo(0,0);
+}
+function render(){
+  if(view==='motoren')renderMotoren();
+  else if(view==='motor-detail')renderMotorDetail();
+  else if(view==='motor-nieuw')renderMotorNieuw();
+}
+
+// ── MOTOREN LIJST ─────────────────────────────────────────────────────────────
+function getMotorData(mn){
+  const saved=motorenCache[mn]||{};
+  const motorSessies=sessies.filter(s=>s.motorNummer===mn);
+  const first=motorSessies[0]||{};
+  return{motorNummer:mn,klant:saved.klant||first.klant||'',motorMerk:saved.motorMerk||first.motorMerk||'',motorType:saved.motorType||first.motorType||'',motorNaam:saved.motorNaam||first.motorNaam||''};
+}
+function dfkGroepToggle(key){
+  if(dfkIngeklapt.has(key))dfkIngeklapt.delete(key);else dfkIngeklapt.add(key);
+  saveMotorState();renderMotoren();
+}
+function openMotorDetail(mn){selectedMotor=getMotorData(mn);navigeer('motor-detail');}
+
+function renderMotoren(){
+  const map={};
+  Object.entries(motorenCache).forEach(([mn,saved])=>{
+    if(!mn)return;
+    map[mn]={motorNummer:mn,klant:saved.klant||'',motorMerk:saved.motorMerk||'',motorType:saved.motorType||'',motorNaam:saved.motorNaam||'',status:saved.status||'Actief',sessies:[],bestHP:null,bestCarbu:'',lastDatum:null};
+  });
+  sessies.forEach(s=>{
+    if(!s.motorNummer)return;
+    const saved=motorenCache[s.motorNummer]||{};
+    if(!map[s.motorNummer])map[s.motorNummer]={motorNummer:s.motorNummer,klant:'',motorMerk:'',motorType:'',motorNaam:'',status:'Actief',sessies:[],bestHP:null,bestCarbu:'',lastDatum:null};
+    const m=map[s.motorNummer];
+    if(!m.klant)m.klant=s.klant||saved.klant||'';
+    if(!m.motorMerk)m.motorMerk=s.motorMerk||saved.motorMerk||'';
+    if(!m.motorType)m.motorType=s.motorType||saved.motorType||'';
+    if(!m.motorNaam)m.motorNaam=s.motorNaam||saved.motorNaam||'';
+    m.status=saved.status||'Actief';m.sessies.push(s);
+    const best=bestRun(s.runs);
+    if(best?.vermogen&&(!m.bestHP||best.vermogen>m.bestHP)){m.bestHP=best.vermogen;m.bestCarbu=effectiefCarbu(s);}
+    const d=s.runs?.[0]?.datum;if(d&&(!m.lastDatum||d>m.lastDatum))m.lastDatum=d;
+  });
+  const motoren=Object.values(map);
+  const isDfk=m=>!m.klant||m.klant.toLowerCase()==='dfk';
+  const natKey=s=>s.replace(/(\d+)/g,n=>n.padStart(10,'0'));
+  const isActief=m=>(m.status||'Actief')==='Actief';
+  const actiefMotoren=motoren.filter(isActief);
+  const archiefMotoren=motoren.filter(m=>!isActief(m));
+  const dfkActief=actiefMotoren.filter(isDfk).sort((a,b)=>natKey(a.motorNaam||'').localeCompare(natKey(b.motorNaam||''),'nl'));
+  const klantActief=actiefMotoren.filter(m=>!isDfk(m)).sort((a,b)=>(b.lastDatum||'').localeCompare(a.lastDatum||''));
+  const zoekStr=motorenZoek.toLowerCase();
+  const filterMotor=m=>!zoekStr||(m.motorNummer||'').toLowerCase().includes(zoekStr)||(m.motorNaam||'').toLowerCase().includes(zoekStr)||(m.klant||'').toLowerCase().includes(zoekStr)||(m.motorMerk||'').toLowerCase().includes(zoekStr);
+  const dfkGefilterd=dfkActief.filter(filterMotor);
+  const klantGefilterd=klantActief.filter(filterMotor);
+  const archiefGefilterd=archiefMotoren.filter(filterMotor);
+  const tabActief=motorenTab;
+  const tabStijl=t=>`padding:9px 20px;font-weight:700;font-size:14px;border:none;background:none;cursor:pointer;border-bottom:${tabActief===t?'2px solid #2563eb':'2px solid transparent'};color:${tabActief===t?'#2563eb':'#6b7280'};margin-bottom:-2px`;
+  const motorRij=(m,toonKlant)=>`<tr style="cursor:pointer" onclick="openMotorDetail('${esc(m.motorNummer)}')">
+    <td style="font-weight:700;color:#1d4ed8">${esc(m.motorNummer)}</td>
+    ${toonKlant?`<td>${esc(m.klant)}</td>`:''}
+    <td>${esc(m.motorMerk)}</td><td>${esc(m.motorType)}</td><td>${esc(m.motorNaam)}</td>
+    <td style="font-weight:700;color:#2563eb">${m.bestHP?`${m.bestHP} HP`:'—'}</td>
+    <td style="color:#374151">${m.sessies.length}</td>
+    <td style="color:#6b7280">${m.lastDatum?fmtDt(m.lastDatum):'—'}</td></tr>`;
+  const motorTabel=(lijst,toonKlant)=>{
+    if(!lijst.length)return`<div style="color:#9ca3af;font-size:13px;padding:12px 0">Geen motoren.</div>`;
+    const headers=toonKlant?['Motornummer','Klant','Merk','Type','Naam','Best HP','Sessies','Laatste test']:['Motornummer','Merk','Type','Naam','Best HP','Sessies','Laatste test'];
+    return`<div class="tbl-border"><div class="tbl-scroll"><table class="tbl"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${lijst.map(m=>motorRij(m,toonKlant)).join('')}</tbody></table></div></div>`;
+  };
+  const statusBadgeMotor=s=>s==='Verkocht'
+    ?`<span style="background:#fee2e2;color:#991b1b;border-radius:6px;padding:1px 8px;font-size:11px;font-weight:700">Verkocht</span>`
+    :`<span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 8px;font-size:11px;font-weight:700">Non-actief</span>`;
+  const motorTabelArchief=lijst=>{
+    if(!lijst.length)return`<div style="color:#9ca3af;font-size:13px;padding:12px 0">Geen gearchiveerde motoren.</div>`;
+    return`<div class="tbl-border"><div class="tbl-scroll"><table class="tbl"><thead><tr>${['Motornummer','Klant','Merk / Type','Naam','Status','Best HP','Sessies'].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${lijst.map(m=>`<tr style="cursor:pointer;opacity:.75" onclick="openMotorDetail('${esc(m.motorNummer)}')"><td style="font-weight:700;color:#6b7280">${esc(m.motorNummer)}</td><td>${esc(m.klant)}</td><td style="color:#6b7280">${esc([m.motorMerk,m.motorType].filter(Boolean).join(' · '))}</td><td>${esc(m.motorNaam)}</td><td>${statusBadgeMotor(m.status)}</td><td style="font-weight:700;color:#2563eb">${m.bestHP?`${m.bestHP} HP`:'—'}</td><td style="color:#374151">${m.sessies.length}</td></tr>`).join('')}</tbody></table></div></div>`;
+  };
+  const motorTabelDfk=lijst=>{
+    if(!lijst.length)return`<div style="color:#9ca3af;font-size:13px;padding:12px 0">Geen motoren.</div>`;
+    const groepMap={};
+    lijst.forEach(m=>{const key=[m.motorMerk,m.motorType].filter(Boolean).join(' · ')||'(onbekend type)';if(!groepMap[key])groepMap[key]=[];groepMap[key].push(m);});
+    return Object.entries(groepMap).sort(([a],[b])=>natKey(a).localeCompare(natKey(b))).map(([groepNaam,motors])=>{
+      const ingeklapt=dfkIngeklapt.has(groepNaam);
+      const safeKey=groepNaam.replace(/'/g,"\\'");
+      return`<div style="margin-bottom:12px">
+        <div onclick="dfkGroepToggle('${safeKey}')" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border:1.5px solid #e5e7eb;border-radius:${ingeklapt?'10px':'10px 10px 0 0'}">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:13px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:.6px">${esc(groepNaam)}</span>
+            <span style="font-weight:500;color:#9ca3af;font-size:12px">${motors.length} motor${motors.length!==1?'en':''}</span>
+            ${motors.some(m=>m.bestHP)?`<span style="font-size:12px;font-weight:700;color:#2563eb">best ${Math.max(...motors.filter(m=>m.bestHP).map(m=>m.bestHP))} HP</span>`:''}
+          </div>
+          <span style="font-size:14px;color:#9ca3af;display:inline-block;transform:rotate(${ingeklapt?'0':'180'}deg)">▼</span>
+        </div>
+        ${ingeklapt?'':`<div class="tbl-border" style="border-top:none;border-radius:0 0 10px 10px"><div class="tbl-scroll"><table class="tbl">
+          <thead><tr>${['Motornummer','Naam','Best HP','Beste carbu','Sessies','Laatste test'].map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+          <tbody>${motors.map(m=>`<tr style="cursor:pointer" onclick="openMotorDetail('${esc(m.motorNummer)}')">
+            <td style="font-weight:700;color:#1d4ed8">${esc(m.motorNummer)}</td><td>${esc(m.motorNaam)}</td>
+            <td style="font-weight:700;color:#2563eb">${m.bestHP?`${m.bestHP} HP`:'—'}</td>
+            <td style="color:#374151;font-weight:600">${esc(m.bestCarbu||'—')}</td>
+            <td style="color:#374151">${m.sessies.length}</td>
+            <td style="color:#6b7280">${m.lastDatum?fmtDt(m.lastDatum):'—'}</td></tr>`).join('')}</tbody>
+        </table></div></div>`}
+      </div>`;
+    }).join('');
+  };
+
+  document.getElementById('main').innerHTML=`
+  <div class="form-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:20px;font-weight:800;color:#111827">Motoren</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:2px">${actiefMotoren.length} actief${archiefMotoren.length?` · ${archiefMotoren.length} gearchiveerd`:''}</div>
+      </div>
+      <button class="btn btn-blue" onclick="navigeer('motor-nieuw')">+ Motor toevoegen</button>
+    </div>
+    <input class="inp" id="motoren-zoek" value="${esc(motorenZoek)}" placeholder="Zoek op motornummer, naam of klant..." style="width:100%;margin-bottom:16px">
+    ${!actiefMotoren.length&&!archiefMotoren.length
+      ?`<div class="empty-state"><div style="font-size:40px;margin-bottom:8px">&#x1F527;</div><div style="font-weight:600">Nog geen motoren</div><div style="font-size:13px;color:#9ca3af;margin-top:6px">Voeg een motor toe om te beginnen.</div><button class="btn-blue-lg" style="margin-top:14px" onclick="navigeer('motor-nieuw')">+ Motor toevoegen</button></div>`
+      :`<div style="display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:18px">
+        <button onclick="motorenTab='dfk';saveMotorState();renderMotoren()" style="${tabStijl('dfk')}">DFK (${dfkGefilterd.length})</button>
+        <button onclick="motorenTab='klant';saveMotorState();renderMotoren()" style="${tabStijl('klant')}">Klanten (${klantGefilterd.length})</button>
+        ${archiefMotoren.length?`<button onclick="motorenTab='archief';saveMotorState();renderMotoren()" style="${tabStijl('archief')}">Archief (${archiefGefilterd.length})</button>`:''}
+      </div>
+      ${tabActief==='archief'
+        ?(archiefGefilterd.length?motorTabelArchief(archiefGefilterd):`<div class="empty-state" style="padding:32px"><div style="font-size:32px;margin-bottom:8px">&#x1F4E6;</div><div style="font-weight:600">Geen gearchiveerde motoren</div></div>`)
+        :zoekStr&&!dfkGefilterd.length&&!klantGefilterd.length
+          ?`<div class="empty-state" style="padding:32px"><div style="font-size:32px;margin-bottom:8px">&#x1F50D;</div><div style="font-weight:600">Geen resultaten voor "${esc(motorenZoek)}"</div></div>`
+          :tabActief==='dfk'?motorTabelDfk(dfkGefilterd):motorTabel(klantGefilterd,true)
+      }`
+    }
+  </div>`;
+  const zinput=document.getElementById('motoren-zoek');
+  if(zinput){zinput.addEventListener('input',e=>{const pos=e.target.selectionStart;motorenZoek=e.target.value;renderMotoren();const el=document.getElementById('motoren-zoek');if(el){el.focus();el.setSelectionRange(pos,pos);}});}
+}
+
+// ── MOTOR DETAIL ──────────────────────────────────────────────────────────────
+function renderMotorDetail(){
+  const m=selectedMotor;if(!m){navigeer('motoren');return;}
+  const cached=motorenCache[m.motorNummer]||{};
+  const klant=cached.klant||m.klant||'';
+  const motorMerk=cached.motorMerk||m.motorMerk||'';
+  const motorType=cached.motorType||m.motorType||'';
+  const motorNaam=cached.motorNaam||m.motorNaam||'';
+  const motorStatus=cached.status||'Actief';
+  const motorSessies=sessies.filter(s=>s.motorNummer===m.motorNummer).sort((a,b)=>(b.runs?.[0]?.datum||'').localeCompare(a.runs?.[0]?.datum||''));
+  const totalRuns=motorSessies.reduce((n,s)=>n+(s.runs?.length||0),0);
+  const bestHP=motorSessies.reduce((b,s)=>{const r=bestRun(s.runs);return Math.max(b,parseFloat(r?.vermogen)||0);},0)||null;
+  const bestNm=motorSessies.reduce((b,s)=>{const r=bestRun(s.runs);return Math.max(b,parseFloat(r?.koppel)||0);},0)||null;
+  const sessieRijen=motorSessies.map((s,i)=>{
+    const best=bestRun(s.runs);
+    const isBest=bestHP&&parseFloat(best?.vermogen)===bestHP;
+    const eerste=s.runs?.[0];
+    return`<tr style="cursor:pointer" onclick="openSessieInMain('${s.id}')">
+      <td style="color:#9ca3af;font-weight:600">${i+1}${isBest?` <span style="color:#2563eb">&#9733;</span>`:''}</td>
+      <td style="white-space:nowrap;color:#374151">${eerste?.datum?fmtDt(eerste.datum):'—'}</td>
+      <td style="font-weight:600;color:#374151">${esc(effectiefCarbu(s)||'—')}</td>
+      <td style="color:#374151;font-weight:600">${s.runs?.length||0}</td>
+      <td><span style="font-size:14px;font-weight:${isBest?800:600};color:${isBest?'#2563eb':'#111827'}">${best?.vermogen||'—'} <span style="font-size:11px;font-weight:400">HP</span></span>${best?.vermogenRpm?`<br><span style="font-size:11px;color:#9ca3af">@ ${Number(best.vermogenRpm).toLocaleString()} RPM</span>`:''}</td>
+      <td><span style="font-size:14px;font-weight:600;color:#111827">${best?.koppel||'—'} <span style="font-size:11px;font-weight:400">Nm</span></span>${best?.koppelRpm?`<br><span style="font-size:11px;color:#9ca3af">@ ${Number(best.koppelRpm).toLocaleString()} RPM</span>`:''}</td>
+      <td>${typeBadge(s.testType)}</td><td>${badge(s.uitkomst)}</td>
+      <td style="color:#6b7280;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.opmerkingen||'')}</td></tr>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML=`
+  <div class="form-card">
+    <div class="detail-header" style="margin-bottom:20px">
+      <div class="detail-header-left">
+        <div class="head-row" style="margin-bottom:8px;align-items:center">
+          <button class="btn-back" onclick="navigeer('motoren')">&#x2190;</button>
+          <h2 class="page-title" style="margin:0">${esc(m.motorNummer)}</h2>
+          ${motorStatus!=='Actief'?`<span style="background:${motorStatus==='Verkocht'?'#fee2e2':'#fef3c7'};color:${motorStatus==='Verkocht'?'#991b1b':'#92400e'};border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700;margin-left:6px">${esc(motorStatus)}</span>`:''}
+          <button class="btn-sm" onclick="toggleMotorEdit()" style="margin-left:8px">&#x270F;&#xFE0F; Bewerken</button>
+        </div>
+        ${(klant||motorMerk||motorType||motorNaam)?`<div class="detail-meta">
+          ${klant?`<div class="meta-row"><span class="meta-row-lbl">Klant</span><span class="meta-row-val klant">${esc(klant)}</span></div>`:''}
+          ${motorMerk?`<div class="meta-row"><span class="meta-row-lbl">Merk</span><span class="meta-row-val">${esc(motorMerk)}</span></div>`:''}
+          ${motorType?`<div class="meta-row"><span class="meta-row-lbl">Type</span><span class="meta-row-val">${esc(motorType)}</span></div>`:''}
+          ${motorNaam?`<div class="meta-row"><span class="meta-row-lbl">Naam</span><span class="meta-row-val">${esc(motorNaam)}</span></div>`:''}
+        </div>`:''}
+      </div>
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-shrink:0;padding-top:2px">
+        ${bestHP?`<div class="stat-mini"><div style="font-size:26px;font-weight:800;color:#2563eb;line-height:1">${bestHP}</div><div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:3px">HP BEST</div></div>`:''}
+        ${bestNm?`<div class="stat-mini"><div style="font-size:26px;font-weight:800;color:#111827;line-height:1">${bestNm}</div><div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:3px">NM BEST</div></div>`:''}
+        <div class="stat-mini"><div style="font-size:22px;font-weight:700;color:#374151;line-height:1">${motorSessies.length}</div><div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:3px">SESSIES</div></div>
+        <div class="stat-mini"><div style="font-size:22px;font-weight:700;color:#374151;line-height:1">${totalRuns}</div><div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:3px">RUNS</div></div>
+      </div>
+    </div>
+    <div id="motor-edit-form" style="display:none;margin-bottom:16px" class="sessie-card">
+      <div style="padding:14px 18px;border-bottom:1px solid #f3f4f6;font-weight:700;font-size:13px;color:#374151">Motor bewerken</div>
+      <div style="padding:16px 18px">
+        <div class="form-grid" style="margin-bottom:12px">
+          <div class="field"><label class="field-label">Klant</label><input class="inp" id="me-klant" value="${esc(klant)}" placeholder="bijv. DFK" autocomplete="off"></div>
+          <div class="field"><label class="field-label">Motor merk</label><input class="inp" id="me-merk" value="${esc(motorMerk)}" placeholder="bijv. Honda" autocomplete="off"></div>
+          <div class="field"><label class="field-label">Motor type</label><input class="inp" id="me-type" value="${esc(motorType)}" placeholder="bijv. CBR600" autocomplete="off"></div>
+          <div class="field" style="grid-column:1/-1"><label class="field-label">Motor naam specifiek</label><input class="inp" id="me-naam" value="${esc(motorNaam)}" placeholder="bijv. Stage 3 build 2025" autocomplete="off"></div>
+          <div class="field"><label class="field-label">Status</label>
+            <select class="inp" id="me-status">${['Actief','Verkocht','Non-actief'].map(s=>`<option${s===motorStatus?' selected':''}>${s}</option>`).join('')}</select></div>
+        </div>
+        <div class="actions-row" style="margin-top:4px">
+          <button class="btn-blue-lg" onclick="motorEditSave()">Opslaan</button>
+          <button class="btn-outline" onclick="toggleMotorEdit()">Annuleren</button>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px">Sessies (${motorSessies.length})</div>
+    ${motorSessies.length
+      ?`<div class="tbl-border"><div class="tbl-scroll"><table class="tbl"><thead><tr>${['#','Datum','Carbu','Runs','Best HP','Best Nm','Type','Status','Opmerking'].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${sessieRijen}</tbody></table></div></div>`
+      :`<div class="empty-state" style="padding:32px 24px"><div style="font-size:32px;margin-bottom:8px">&#x1F4ED;</div><div style="font-weight:600;color:#374151">Nog geen sessies voor dit motor</div><div style="font-size:13px;color:#9ca3af;margin-top:4px">Ga naar Sessies om een nieuwe sessie toe te voegen.</div></div>`}
+  </div>`;
+}
+
+function toggleMotorEdit(){
+  const form=document.getElementById('motor-edit-form');if(!form)return;
+  const isOpen=form.style.display!=='none';
+  form.style.display=isOpen?'none':'block';
+  if(!isOpen){const el=document.getElementById('me-klant');if(el)el.focus();}
+}
+async function motorEditSave(){
+  const m=selectedMotor;if(!m)return;
+  const oudeKlant=motorenCache[m.motorNummer]?.klant||m.klant||'';
+  const klant=document.getElementById('me-klant')?.value.trim()||'';
+  const motorMerk=document.getElementById('me-merk')?.value.trim()||'';
+  const motorType=document.getElementById('me-type')?.value.trim()||'';
+  const motorNaam=document.getElementById('me-naam')?.value.trim()||'';
+  const status=document.getElementById('me-status')?.value||'Actief';
+  await dbMotorSave(m.motorNummer,{klant,motorMerk,motorType,motorNaam,status});
+  if(klant!==oudeKlant){
+    const teUpdaten=[];
+    sessies=sessies.map(s=>{if(s.motorNummer!==m.motorNummer)return s;const b={...s,klant};teUpdaten.push(b);return b;});
+    await Promise.all(teUpdaten.map(s=>dbSave(s)));
+  }
+  selectedMotor=getMotorData(m.motorNummer);navigeer('motor-detail');
+}
+
+// ── MOTOR NIEUW ───────────────────────────────────────────────────────────────
+function renderMotorNieuw(){
+  document.getElementById('main').innerHTML=`
+  <div class="form-card">
+    <div class="head-row" style="margin-bottom:20px">
+      <button class="btn-back" onclick="navigeer('motoren')">&#x2190;</button>
+      <h2 class="page-title">Motor toevoegen</h2>
+    </div>
+    <div class="form-section">
+      <div class="form-grid">
+        <div class="field"><label class="field-label">Motornummer *</label><input class="inp" id="mn-nummer" placeholder="bijv. DFK-001" autocomplete="off"></div>
+        <div class="field"><label class="field-label">Klant</label><input class="inp" id="mn-klant" placeholder="bijv. DFK of Jan Peeters" autocomplete="off"></div>
+        <div class="field"><label class="field-label">Motor merk</label><input class="inp" id="mn-merk" placeholder="bijv. Honda" autocomplete="off"></div>
+        <div class="field"><label class="field-label">Motor type</label><input class="inp" id="mn-type" placeholder="bijv. CBR600" autocomplete="off"></div>
+        <div class="field" style="grid-column:1/-1"><label class="field-label">Motor naam specifiek</label><input class="inp" id="mn-naam" placeholder="bijv. Stage 3 build 2025" autocomplete="off"></div>
+      </div>
+    </div>
+    <div id="mn-fout" style="display:none" class="error-box"></div>
+    <div class="actions-row">
+      <button class="btn-blue-lg" onclick="saveMotorNieuw()">Motor opslaan</button>
+      <button class="btn-outline" onclick="navigeer('motoren')">Annuleren</button>
+    </div>
+  </div>`;
+  acInline(document.getElementById('mn-nummer'),'motorNummer',mn=>{
+    const d=motorenCache[mn];if(!d)return;
+    [['mn-klant','klant'],['mn-merk','motorMerk'],['mn-type','motorType'],['mn-naam','motorNaam']].forEach(([id,key])=>{const el=document.getElementById(id);if(el&&!el.value&&d[key])el.value=d[key];});
+  });
+  acInline(document.getElementById('mn-klant'),'klant');
+  acInline(document.getElementById('mn-merk'),'motorMerk');
+  acInline(document.getElementById('mn-type'),'motorType');
+  acInline(document.getElementById('mn-naam'),'motorNaam');
+}
+async function saveMotorNieuw(){
+  const mn=document.getElementById('mn-nummer').value.trim();
+  if(!mn){const b=document.getElementById('mn-fout');b.textContent='Vul een motornummer in.';b.style.display='block';return;}
+  const klant=document.getElementById('mn-klant').value.trim();
+  const motorMerk=document.getElementById('mn-merk').value.trim();
+  const motorType=document.getElementById('mn-type').value.trim();
+  const motorNaam=document.getElementById('mn-naam').value.trim();
+  await dbMotorSave(mn,{klant,motorMerk,motorType,motorNaam,status:'Actief'});
+  selectedMotor=getMotorData(mn);navigeer('motor-detail');
+}
+
+// ── AUTH + INIT ───────────────────────────────────────────────────────────────
+async function doLogout(){
+  document.getElementById('nav-dropdown')?.classList.remove('open');
+  if(sb)await sb.auth.signOut();
+  window.location.href='index.html';
+}
+async function init(){
+  try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}catch(e){sb=null;}
+  if(!sb){window.location.href='index.html';return;}
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='index.html';return;}
+  document.getElementById('db-status').innerHTML='<span class="db-dot" style="background:#10b981"></span>Supabase';
+  const[data]=await Promise.all([dbLoad(),dbMotorenLoad()]);
+  sessies=data||[];
+  const openMotor=localStorage.getItem('tbp_open_motor');
+  if(openMotor){
+    localStorage.removeItem('tbp_open_motor');
+    selectedMotor=getMotorData(openMotor);
+    view='motor-detail';saveMotorState();
+  } else {
+    restoreMotorState();
+  }
+  render();
+}
+init();
+</script>
+</body>
+</html>

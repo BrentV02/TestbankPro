@@ -1,0 +1,357 @@
+﻿<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klanten — ProDynoDFK</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100vh;overflow-x:hidden}
+#header{background:#111827;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;gap:12px}
+.logo{display:flex;align-items:center;gap:12px;cursor:pointer;order:-1}
+.logo-name{font-weight:800;font-size:18px;letter-spacing:-0.5px}
+.logo-sub{color:#6b7280;font-size:13px}
+.btn{border:none;border-radius:8px;padding:7px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.btn:hover{opacity:.88}
+.btn-sm{background:none;border:1.5px solid #e5e7eb;border-radius:7px;padding:6px 14px;cursor:pointer;font-size:13px;color:#374151;font-weight:600;font-family:inherit;white-space:nowrap}
+.btn-sm:hover{border-color:#2563eb;color:#2563eb}
+.btn-back{background:none;border:none;cursor:pointer;color:#6b7280;font-size:20px;padding:0;font-family:inherit}
+#main{max-width:1060px;margin:0 auto;padding:24px 16px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:12px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.stat-val{font-size:26px;font-weight:800}
+.stat-lbl{font-size:12px;color:#6b7280;margin-top:2px}
+.sessie-card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:12px;overflow:hidden}
+.sessie-head{padding:14px 18px;display:flex;align-items:flex-start;gap:14px;border-bottom:1px solid #f3f4f6;flex-wrap:wrap}
+.sessie-meta{flex:1;min-width:200px}
+.sessie-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sessie-motor{font-weight:800;font-size:17px;color:#111827;letter-spacing:.3px}
+.sessie-info{font-size:12px;color:#6b7280;margin-top:5px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.sessie-stats{display:flex;gap:14px;align-items:flex-start;padding-top:2px}
+.stat-mini{text-align:center;min-width:48px}
+.badge{padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.badge-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.b-geslaagd{background:#d1fae5;color:#065f46}.b-geslaagd .badge-dot{background:#10b981}
+.b-afgekeurd{background:#fee2e2;color:#991b1b}.b-afgekeurd .badge-dot{background:#ef4444}
+.b-lopend{background:#fef3c7;color:#92400e}.b-lopend .badge-dot{background:#f59e0b}
+.tbadge{border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700;white-space:nowrap}
+.tb-test{background:#e0e7ff;color:#3730a3}
+.tb-inrijden{background:#fef3c7;color:#92400e}
+.tb-vermogenstest{background:#ede9fe;color:#5b21b6}
+.tb-afstelling{background:#fce7f3;color:#9d174d}
+.empty-state{background:#fff;border-radius:12px;text-align:center;padding:48px;color:#9ca3af;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.loading{text-align:center;padding:80px;color:#6b7280;font-size:15px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.nav-wrap{position:relative;flex-shrink:0;order:1}
+.nav-toggle{background:#374151;border:none;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;gap:7px;font-weight:700;font-family:inherit}
+.nav-toggle:hover{background:#4b5563}
+.nav-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#1f2937;border-radius:12px;min-width:230px;box-shadow:0 8px 32px rgba(0,0,0,.35);z-index:9999;display:none;overflow:hidden;border:1px solid #374151}
+.nav-dropdown.open{display:block}
+.nav-header{padding:10px 16px 8px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 16px;color:#d1d5db;cursor:pointer;font-size:14px;font-weight:600;border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .12s}
+.nav-item:hover{background:#374151;color:#fff}
+.nav-item.active{background:#1e3a5f;color:#60a5fa}
+.nav-item .nav-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.nav-divider{height:1px;background:#374151;margin:4px 0}
+.db-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+@media(max-width:600px){
+  #header{height:auto;min-height:52px;padding:8px 12px;gap:8px}
+  #main{padding:12px 10px}
+  .sessie-stats{display:none}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header id="header">
+  <div style="display:flex;align-items:center;gap:10px;order:1;margin-left:auto">
+    <span id="db-status" style="font-size:12px;color:#6b7280;display:flex;align-items:center;white-space:nowrap"></span>
+    <div class="nav-wrap">
+      <button class="nav-toggle" id="nav-toggle" onclick="toggleNav()">☰ <span class="btn-lbl" style="font-size:13px">Menu</span></button>
+      <div class="nav-dropdown" id="nav-dropdown">
+        <div class="nav-header">Navigatie</div>
+        <button class="nav-item" onclick="gaNaar('sessies')">Sessies</button>
+        <button class="nav-item" onclick="gaNaar('motoren')">Motoren</button>
+        <button class="nav-item active" onclick="navigeer('klanten')">Klanten</button>
+        <button class="nav-item" onclick="window.location.href='analyse.html'">Analyse</button>
+        <div class="nav-divider"></div>
+        <button class="nav-item" onclick="doLogout()">Afmelden</button>
+      </div>
+    </div>
+  </div>
+  <div class="logo" onclick="window.location.href='index.html'">
+        <img src="logos/dfk-logo.png" style="height:34px;object-fit:contain;background:#fff;border-radius:6px;padding:3px 6px">
+    <span class="logo-name">ProDynoDFK</span>
+  </div>
+</header>
+
+<div id="main"><div class="loading">⏳ Laden...</div></div>
+
+<script>
+const SUPABASE_URL = 'https://jonfknallwdyknxwcqww.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvbmZrbmFsbHdkeWtueHdjcXd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNDAwMjUsImV4cCI6MjA5NzgxNjAyNX0.A-uUnNT-Nlwf9ArAd56Ujml5A0XW6G0_mj8RE24On8A';
+
+let sb = null;
+let sessies = [];
+let motorenCache = {};
+let selectedKlant = null;
+let view = 'klanten';
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtDt = d => d ? new Date(d).toLocaleString('nl-NL',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+const bestRun = runs => runs?.reduce((b,r)=>{
+  if(!b) return r;
+  const vB=b.vermogen||0, vR=r.vermogen||0;
+  if(vR>vB) return r;
+  if(vR===vB && (r.koppel||0)>(b.koppel||0)) return r;
+  return b;
+},null)||null;
+const effectiefCarbu = s => bestRun(s.runs)?.carbu || s.carbu || '';
+function badge(s) {
+  const c={Geslaagd:'b-geslaagd',Afgekeurd:'b-afgekeurd',Lopend:'b-lopend'}[s]||'b-lopend';
+  return '<span class="badge '+c+'"><span class="badge-dot"></span>'+esc(s)+'</span>';
+}
+function typeBadge(t) {
+  const c={Inrijden:'tb-inrijden',Vermogenstest:'tb-vermogenstest',Afstelling:'tb-afstelling',Test:'tb-test'}[t]||'tb-test';
+  return '<span class="tbadge '+c+'">'+esc(t)+'</span>';
+}
+
+// ── DATABASE ──────────────────────────────────────────────────────────────────
+function fromRow(r) {
+  return { id: r.id, motorNummer: r.motor_nummer, klant: r.klant||'', carbu: r.carbu||'',
+           testType: r.test_type||'Test', uitkomst: r.uitkomst||'Geslaagd',
+           opmerkingen: r.opmerkingen||'', runs: r.runs||[],
+           motorMerk: r.motor_merk||'', motorType: r.motor_type||'', motorNaam: r.motor_naam||'' };
+}
+async function dbLoad() {
+  const { data, error } = await sb.from('sessies').select('*').order('created_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data.map(fromRow);
+}
+async function dbMotorenLoad() {
+  const { data, error } = await sb.from('motoren').select('*');
+  if (error) { console.error(error); return; }
+  motorenCache = {};
+  data.forEach(r => {
+    motorenCache[r.motor_nummer] = {
+      klant: r.klant||'', motorMerk: r.motor_merk||'',
+      motorType: r.motor_type||'', motorNaam: r.motor_naam||'', status: r.status||'Actief'
+    };
+  });
+}
+
+// ── NAVIGATIE ─────────────────────────────────────────────────────────────────
+function toggleNav() { document.getElementById('nav-dropdown').classList.toggle('open'); }
+document.addEventListener('click', e => { if(!e.target.closest('.nav-wrap')) document.getElementById('nav-dropdown')?.classList.remove('open'); });
+function gaNaar(pagina) {
+  localStorage.setItem('tbp_nav_target', pagina);
+  window.location.href = 'index.html';
+}
+function openMotorInMain(mn) {
+  localStorage.setItem('tbp_open_motor', mn);
+  window.location.href = 'motoren.html';
+}
+function openSessieInMain(id) {
+  localStorage.setItem('tbp_open_sessie', id);
+  window.location.href = 'index.html';
+}
+function saveKlantState() {
+  try { localStorage.setItem('tbp_klanten_view', JSON.stringify({ view, selectedKlant })); } catch(e) {}
+}
+function restoreKlantState() {
+  try {
+    const s = JSON.parse(localStorage.getItem('tbp_klanten_view') || '{}');
+    if (s.view) view = s.view;
+    if (s.selectedKlant !== undefined) selectedKlant = s.selectedKlant;
+  } catch(e) {}
+}
+function navigeer(v) {
+  view = v;
+  saveKlantState();
+  if (v === 'klanten') renderKlanten();
+  else if (v === 'klant-detail') renderKlantDetail();
+}
+
+// ── KLANTEN ───────────────────────────────────────────────────────────────────
+function getKlanten() {
+  const map = {};
+  sessies.forEach(s => {
+    const k = s.klant || '';
+    if (!map[k]) map[k] = { naam: k, sessies: [], motoren: new Set() };
+    map[k].sessies.push(s);
+    if (s.motorNummer) map[k].motoren.add(s.motorNummer);
+  });
+  return Object.values(map).sort((a, b) => {
+    if (!a.naam && b.naam) return 1;
+    if (a.naam && !b.naam) return -1;
+    return a.naam.localeCompare(b.naam, 'nl');
+  });
+}
+
+function renderKlanten() {
+  const klanten = getKlanten();
+  let h = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-size:20px;font-weight:800;color:#111827">Klanten</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:2px">${klanten.length} klant${klanten.length!==1?'en':''} — ${sessies.length} sessie${sessies.length!==1?'s':''} totaal</div>
+    </div>
+  </div>`;
+  if (!klanten.length) {
+    h += `<div class="empty-state"><div style="font-size:40px;margin-bottom:8px">👥</div><div style="font-weight:600">Geen klanten gevonden</div></div>`;
+  } else {
+    klanten.forEach(k => {
+      const runs = k.sessies.reduce((t, s) => t + (s.runs?.length || 0), 0);
+      const bests = k.sessies.map(s => bestRun(s.runs)).filter(Boolean);
+      const topHp = bests.length ? Math.max(...bests.map(b => b.vermogen || 0)) : null;
+      const datums = k.sessies.flatMap(s => s.runs?.map(r => r.datum) || []).filter(Boolean).sort();
+      const laatste = datums[datums.length - 1];
+      const motoren = [...k.motoren].slice(0, 5);
+      h += `<div class="sessie-card" style="margin-bottom:10px">
+        <div class="sessie-head" style="cursor:pointer" data-action="klant-bekijk" data-klant="${esc(k.naam)}">
+          <div class="sessie-meta">
+            <div class="sessie-title-row">
+              <span class="sessie-motor">${k.naam ? esc(k.naam) : '<span style="color:#9ca3af;font-style:italic">Geen klant</span>'}</span>
+            </div>
+            <div class="sessie-info">
+              <span>📋 ${k.sessies.length} sessie${k.sessies.length!==1?'s':''}</span>
+              <span>🔁 ${runs} run${runs!==1?'s':''}</span>
+              ${motoren.length ? `<span>🏎 ${motoren.map(m=>esc(m)).join(', ')}${k.motoren.size>5?` +${k.motoren.size-5}`:''}</span>` : ''}
+              ${laatste ? `<span>🗓 ${fmtDt(laatste)}</span>` : ''}
+            </div>
+          </div>
+          ${topHp ? `<div class="sessie-stats"><div class="stat-mini"><div style="font-size:18px;font-weight:800;color:#2563eb">${topHp} HP</div><div style="font-size:11px;color:#9ca3af">Best</div></div></div>` : ''}
+          <button class="btn-sm" data-action="klant-bekijk" data-klant="${esc(k.naam)}">Bekijk →</button>
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById('main').innerHTML = h;
+}
+
+function renderKlantDetail() {
+  const k = getKlanten().find(x => x.naam === selectedKlant);
+  if (!k) { navigeer('klanten'); return; }
+  const runs = k.sessies.reduce((t, s) => t + (s.runs?.length || 0), 0);
+  const bests = k.sessies.map(s => bestRun(s.runs)).filter(Boolean);
+  const topHp = bests.length ? Math.max(...bests.map(b => b.vermogen || 0)) : null;
+  const topNm = bests.length ? Math.max(...bests.map(b => b.koppel || 0)) : null;
+
+  const motorMap = {};
+  k.sessies.forEach(s => {
+    const mn = s.motorNummer || '(onbekend)';
+    if (!motorMap[mn]) motorMap[mn] = [];
+    motorMap[mn].push(s);
+  });
+  const motorGroepen = Object.entries(motorMap).sort(([,a],[,b]) => {
+    const da = a[0]?.runs?.[0]?.datum || '';
+    const db = b[0]?.runs?.[0]?.datum || '';
+    return db.localeCompare(da);
+  });
+
+  let h = `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+    <button class="btn-back" data-action="klant-terug">←</button>
+    <div style="flex:1">
+      <div style="font-size:18px;font-weight:800;color:#111827">${k.naam ? esc(k.naam) : '<span style="color:#9ca3af;font-style:italic">Geen klant</span>'}</div>
+      <div style="font-size:12px;color:#6b7280">${k.sessies.length} sessie${k.sessies.length!==1?'s':''} · ${runs} run${runs!==1?'s':''} · ${motorGroepen.length} motor${motorGroepen.length!==1?'en':''}</div>
+    </div>
+  </div>
+  <div class="stats-grid" style="margin-bottom:24px">
+    <div class="stat-card"><div class="stat-val" style="color:#2563eb">${k.sessies.length}</div><div class="stat-lbl">Sessies</div></div>
+    <div class="stat-card"><div class="stat-val">${runs}</div><div class="stat-lbl">Runs totaal</div></div>
+    ${topHp ? `<div class="stat-card"><div class="stat-val" style="color:#2563eb">${topHp} HP</div><div class="stat-lbl">Best vermogen</div></div>` : ''}
+    ${topNm ? `<div class="stat-card"><div class="stat-val">${topNm} Nm</div><div class="stat-lbl">Best koppel</div></div>` : ''}
+    <div class="stat-card"><div class="stat-val">${k.motoren.size}</div><div class="stat-lbl">Motoren</div></div>
+  </div>`;
+
+  motorGroepen.forEach(([mn, motorSessies]) => {
+    const cached = motorenCache[mn] || {};
+    const motorNaam = cached.motorNaam || motorSessies[0]?.motorNaam || '';
+    const motorMerk = cached.motorMerk || motorSessies[0]?.motorMerk || '';
+    const motorType = cached.motorType || motorSessies[0]?.motorType || '';
+    const motorInfo = [motorMerk, motorType, motorNaam].filter(Boolean).join(' · ');
+    const motorBests = motorSessies.map(s => bestRun(s.runs)).filter(Boolean);
+    const mBestHP = motorBests.length ? Math.max(...motorBests.map(b => b.vermogen||0)) : null;
+    const mBestNm = motorBests.length ? Math.max(...motorBests.map(b => b.koppel||0)) : null;
+
+    h += `<div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#f8fafc;border:1.5px solid #e5e7eb;border-radius:10px 10px 0 0;border-bottom:none">
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#1d4ed8">${esc(mn)}</div>
+          ${motorInfo ? `<div style="font-size:12px;color:#6b7280;margin-top:2px">${esc(motorInfo)}</div>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:16px">
+          ${mBestHP ? `<div class="stat-mini"><div style="font-size:16px;font-weight:800;color:#2563eb;line-height:1">${mBestHP}</div><div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px">HP best</div></div>` : ''}
+          ${mBestNm ? `<div class="stat-mini"><div style="font-size:16px;font-weight:700;color:#111827;line-height:1">${mBestNm}</div><div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px">Nm best</div></div>` : ''}
+          <div class="stat-mini"><div style="font-size:15px;font-weight:700;color:#374151;line-height:1">${motorSessies.length}</div><div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px">Sessies</div></div>
+          <button class="btn-sm" onclick="openMotorInMain('${esc(mn)}')">Motor →</button>
+        </div>
+      </div>
+      <div style="border:1.5px solid #e5e7eb;border-radius:0 0 10px 10px;overflow:hidden">`;
+
+    motorSessies.forEach(s => {
+      const best = bestRun(s.runs), eerste = s.runs?.[0];
+      h += `<div class="sessie-card" style="border-radius:0;border-left:none;border-right:none;border-top:none;border-bottom:1px solid #f3f4f6">
+        <div class="sessie-head">
+          <div class="sessie-meta">
+            <div class="sessie-title-row">${typeBadge(s.testType)}${badge(s.uitkomst)}</div>
+            <div class="sessie-info">
+              ${effectiefCarbu(s) ? `<span>⚙️ ${esc(effectiefCarbu(s))}</span>` : ''}
+              ${eerste?.datum ? `<span>🗓 ${fmtDt(eerste.datum)}</span>` : ''}
+              <span>${s.runs?.length || 0} run${(s.runs?.length||0)!==1?'s':''}</span>
+            </div>
+          </div>
+          ${best ? `<div class="sessie-stats">
+            <div class="stat-mini"><div style="font-size:18px;font-weight:800;color:#2563eb">${best.vermogen||'—'}</div><div style="font-size:11px;color:#9ca3af">HP</div></div>
+            <div class="stat-mini"><div style="font-size:18px;font-weight:800;color:#111827">${best.koppel||'—'}</div><div style="font-size:11px;color:#9ca3af">Nm</div></div>
+          </div>` : ''}
+          <button class="btn-sm" data-action="bekijk" data-id="${s.id}">Bekijk →</button>
+        </div>
+      </div>`;
+    });
+    h += `</div></div>`;
+  });
+
+  document.getElementById('main').innerHTML = h;
+}
+
+// ── EVENT DELEGATION ──────────────────────────────────────────────────────────
+document.getElementById('main').addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const { action } = el.dataset;
+  if (action === 'klant-bekijk') { selectedKlant = el.dataset.klant; navigeer('klant-detail'); }
+  else if (action === 'klant-terug') navigeer('klanten');
+  else if (action === 'bekijk') openSessieInMain(el.dataset.id);
+});
+
+// ── AUTH + INIT ───────────────────────────────────────────────────────────────
+async function doLogout() {
+  document.getElementById('nav-dropdown')?.classList.remove('open');
+  if (sb) await sb.auth.signOut();
+  window.location.href = 'index.html';
+}
+async function init() {
+  try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) { sb = null; }
+  if (!sb) { window.location.href = 'index.html'; return; }
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  document.getElementById('db-status').innerHTML = '<span class="db-dot" style="background:#10b981"></span>Supabase';
+  const [data] = await Promise.all([dbLoad(), dbMotorenLoad()]);
+  sessies = data || [];
+  restoreKlantState();
+  // Valideer: als klant niet meer bestaat, val terug naar overzicht
+  if (view === 'klant-detail') {
+    const k = getKlanten().find(x => x.naam === selectedKlant);
+    if (!k) { view = 'klanten'; selectedKlant = null; }
+  }
+  if (view === 'klant-detail') renderKlantDetail();
+  else renderKlanten();
+}
+init();
+</script>
+</body>
+</html>
