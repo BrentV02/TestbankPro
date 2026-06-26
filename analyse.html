@@ -505,12 +505,22 @@ function tekenLijnChart(){
       // Auto-detectie: oude opgeslagen data heeft HP in Watts (>100) → omzetten
       const maxHp = Math.max(...rawCurve.map(p=>p.hp||0));
       const isWatts = maxHp > 100;
-      const punten = rawCurve.map(p=>({
+      let punten = rawCurve.map(p=>({
         x: p.rpm,
         y: isHp
           ? (isWatts ? Math.round(p.hp/745.7*10)/10 : p.hp)
-          : (isWatts ? Math.round(p.nm/10*10)/10 : p.nm) // nm was ook in ruw formaat
+          : (isWatts ? Math.round(p.nm/10*10)/10 : p.nm)
       }));
+      // Spike-detectie op de gerenderde punten: na het piekpunt elke stijging ≥0.4 afknippen
+      if(punten.length>20){
+        punten.sort((a,b)=>a.x-b.x);
+        const peakIdx=punten.reduce((pi,p,i)=>p.y>punten[pi].y?i:pi,0);
+        if(peakIdx>punten.length*0.2){
+          for(let i=peakIdx+1;i<punten.length;i++){
+            if(punten[i].y>punten[i-1].y+0.4){punten=punten.slice(0,i);break;}
+          }
+        }
+      }
       return {
         label: `${s.motorNummer}${tnr?' #'+tnr:''}`,
         data: punten,
