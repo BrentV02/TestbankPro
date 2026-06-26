@@ -222,22 +222,28 @@ function renderForm(){
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
-        <div class="setting-blok setting-blok-baan">
-          <div class="setting-blok-titel">Carbu setting van de baan</div>
-          <div class="setting-grid">
-            <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-bh" placeholder="bijv. 1¼" value="${esc(c.baanHoog||'')}"></div>
-            <div class="field"><label class="field-label">Laag</label><input class="inp" id="f-bl" placeholder="bijv. 1" value="${esc(c.baanLaag||'')}"></div>
+      <details ${isNieuw?'':'open'} style="margin-bottom:20px">
+        <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#374151;padding:8px 0;list-style:none;display:flex;align-items:center;gap:6px;user-select:none">
+          <span id="settings-arrow" style="font-size:11px;color:#9ca3af">▶</span>
+          Instellingen toevoegen <span style="font-size:11px;font-weight:500;color:#9ca3af">(optioneel)</span>
+        </summary>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
+          <div class="setting-blok setting-blok-baan">
+            <div class="setting-blok-titel">Carbu setting van de baan</div>
+            <div class="setting-grid">
+              <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-bh" placeholder="bijv. 1¼" value="${esc(c.baanHoog||'')}"></div>
+              <div class="field"><label class="field-label">Laag</label><input class="inp" id="f-bl" placeholder="bijv. 1" value="${esc(c.baanLaag||'')}"></div>
+            </div>
+          </div>
+          <div class="setting-blok setting-blok-test">
+            <div class="setting-blok-titel">Carbu setting voor de test</div>
+            <div class="setting-grid">
+              <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-th" placeholder="bijv. 1¼" value="${esc(c.testHoog||'')}"></div>
+              <div class="field"><label class="field-label">Laag</label><input class="inp" id="f-tl" placeholder="bijv. ¾" value="${esc(c.testLaag||'')}"></div>
+            </div>
           </div>
         </div>
-        <div class="setting-blok setting-blok-test">
-          <div class="setting-blok-titel">Carbu setting voor de test</div>
-          <div class="setting-grid">
-            <div class="field"><label class="field-label">Hoog</label><input class="inp" id="f-th" placeholder="bijv. 1¼" value="${esc(c.testHoog||'')}"></div>
-            <div class="field"><label class="field-label">Laag</label><input class="inp" id="f-tl" placeholder="bijv. ¾" value="${esc(c.testLaag||'')}"></div>
-          </div>
-        </div>
-      </div>
+      </details>
 
       <div class="field" style="margin-bottom:20px">
         <label class="field-label">Opmerkingen</label>
