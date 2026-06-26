@@ -677,7 +677,7 @@ function parseSpx(buffer, filename) {
     // pre_count = samples vóór de ramp, post_count = samples nà de ramp
     // Extra buffer (+20) voor artefacten net vóór het einde van de ramp
     const preCount = parseInt(get('pre_count'))||0;
-    const postCount = (parseInt(get('post_count'))||0) + 20;
+    const postCount = parseInt(get('post_count'))||0;
     const iStart = preCount;
     const iEnd = n - postCount;
     for (let i=iStart;i<iEnd;i++) {
