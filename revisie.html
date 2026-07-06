@@ -61,6 +61,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .ond-del:hover{color:#1d4ed8}
 .ond-add-row{display:flex;gap:8px;margin-top:8px}
 .ond-add-row .inp{flex:1}
+.fact-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:inherit;white-space:nowrap;transition:opacity .15s;flex-shrink:0;align-self:flex-start}
+.fact-badge.niet{background:#fef3c7;color:#92400e}
+.fact-badge.ja{background:#d1fae5;color:#065f46}
+.fact-badge:hover{opacity:.75}
 
 /* Formulier */
 .form-card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.1);padding:24px}
@@ -140,8 +144,8 @@ let ondBewerk = null;
 const OPSLAG_AC = 'tbp_onderdelen_ac';
 let onderdelenAC = [];
 
-function revFromRow(r){ return { id:r.id, motorNummer:r.motor_nummer||'', klant:r.klant||'', motorMerk:r.motor_merk||'', motorType:r.motor_type||'', datum:r.datum||'', motorUren:r.motor_uren||'', werkUren:r.werk_uren||'', onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'' }; }
-function revToRow(r){ return { id:r.id, motor_nummer:r.motorNummer||'', klant:r.klant||'', motor_merk:r.motorMerk||'', motor_type:r.motorType||'', datum:r.datum||null, motor_uren:r.motorUren||null, werk_uren:r.werkUren||null, onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'' }; }
+function revFromRow(r){ return { id:r.id, motorNummer:r.motor_nummer||'', klant:r.klant||'', motorMerk:r.motor_merk||'', motorType:r.motor_type||'', datum:r.datum||'', motorUren:r.motor_uren||'', werkUren:r.werk_uren||'', onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'', gefactureerd:r.gefactureerd??false }; }
+function revToRow(r){ return { id:r.id, motor_nummer:r.motorNummer||'', klant:r.klant||'', motor_merk:r.motorMerk||'', motor_type:r.motorType||'', datum:r.datum||null, motor_uren:r.motorUren||null, werk_uren:r.werkUren||null, onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'', gefactureerd:r.gefactureerd??false }; }
 
 async function laadRevisies(){
   if(!sb){ revisies=[]; return; }
@@ -300,6 +304,9 @@ function revisieKaart(r){
   const heeftOpmerking = r.opmerkingen?.trim();
   const heeftBody = onds.length || heeftOpmerking;
   const motorInfo = [r.motorMerk, r.motorType].filter(Boolean).map(esc).join(' · ');
+  const factLabel = r.gefactureerd ? '&#10004; Gefactureerd' : 'Niet gefactureerd';
+  const factClass = r.gefactureerd ? 'ja' : 'niet';
+  const factTitle = r.gefactureerd ? 'Klik om te markeren als niet gefactureerd' : 'Klik om te markeren als gefactureerd';
   return `<div class="rev-card" onclick="bewerkRevisie('${esc(r.id)}')">
     <div class="rev-card-head">
       <div style="flex:1;min-width:0">
@@ -312,6 +319,7 @@ function revisieKaart(r){
           ${r.werkUren?`<span>&#128336; ${esc(r.werkUren)} werkuur</span>`:''}
         </div>
       </div>
+      <button class="fact-badge ${factClass}" onclick="event.stopPropagation();toggleGefactureerd('${esc(r.id)}')" title="${factTitle}">${factLabel}</button>
     </div>
     ${heeftBody?`<div class="rev-body">
       ${onds.length?`<div class="rev-blok"><div class="rev-blok-titel">Vervangen onderdelen</div><div class="ond-tags">${onds.sort((a,b)=>a.localeCompare(b,'nl')).map(o=>`<span class="ond-tag">${esc(o)}</span>`).join('')}</div></div>`:''}
@@ -405,6 +413,12 @@ function renderForm(){
           <label class="field-label">Opmerkingen</label>
           <textarea class="textarea" id="f-op" placeholder="Bijzonderheden, aanbevelingen…">${esc(r.opmerkingen||'')}</textarea>
         </div>
+        <div style="margin-top:14px">
+          <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:#374151">
+            <input type="checkbox" id="f-fact" ${r.gefactureerd?'checked':''} style="width:16px;height:16px;cursor:pointer;accent-color:#16a34a">
+            Gefactureerd
+          </label>
+        </div>
       </div>
 
       <div id="fout-box" style="display:none;background:#fee2e2;color:#991b1b;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600"></div>
@@ -444,7 +458,7 @@ function renderForm(){
 // ── ACTIES ────────────────────────────────────────────────────────────────────
 function nieuwRevisie(mn=''){
   const d = mn ? motorenCache[mn] : null;
-  huidig = { id:uuid(), motorNummer:mn, klant:d?.klant||'', motorMerk:d?.motorMerk||'', motorType:d?.motorType||'', datum:vandaag(), motorUren:'', werkUren:'', onderdelen:[], opmerkingen:'' };
+  huidig = { id:uuid(), motorNummer:mn, klant:d?.klant||'', motorMerk:d?.motorMerk||'', motorType:d?.motorType||'', datum:vandaag(), motorUren:'', werkUren:'', onderdelen:[], opmerkingen:'', gefactureerd:false };
   formulierOnderdelen = [];
   view = 'nieuw';
   render();
@@ -485,12 +499,21 @@ async function slaOp(){
     werkUren:    document.getElementById('f-werkuren').value.trim(),
     onderdelen:  onds,
     opmerkingen: document.getElementById('f-op').value.trim(),
+    gefactureerd: document.getElementById('f-fact').checked,
   };
   const idx = revisies.findIndex(r=>r.id===obj.id);
   if(idx>=0) revisies[idx]=obj; else revisies.unshift(obj);
   await dbSaveRevisie(obj);
   slaMotorOp(mn, klant, motorMerk, motorType);
   gaTerug();
+}
+
+async function toggleGefactureerd(id){
+  const r = revisies.find(r=>r.id===id);
+  if(!r) return;
+  r.gefactureerd = !r.gefactureerd;
+  await dbSaveRevisie(r);
+  render();
 }
 
 function verwijderRevisie(id){
