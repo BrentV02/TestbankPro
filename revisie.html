@@ -122,6 +122,8 @@ const fmtDatum = d => d ? new Date(d+'T00:00:00').toLocaleDateString('nl-NL',{da
 const vandaag = () => new Date().toISOString().slice(0,10);
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
+let sb = null;
+let motorenCache = {}; // { motorNummer: { klant, motorMerk, motorType, motorNaam, status } }
 let revisies = [];
 let view = 'lijst'; // 'lijst' | 'nieuw' | 'edit'
 let huidig = null;
@@ -130,6 +132,53 @@ let zoek = '';
 const OPSLAG = 'tbp_revisies';
 function laadRevisies(){ try{ revisies = JSON.parse(localStorage.getItem(OPSLAG)||'[]'); }catch{ revisies=[]; } }
 function slaRevisies(){ localStorage.setItem(OPSLAG, JSON.stringify(revisies)); }
+
+// ── MOTOR CACHE ───────────────────────────────────────────────────────────────
+async function laadMotoren(){
+  if(!sb) return;
+  const {data,error} = await sb.from('motoren').select('*');
+  if(error){ console.error(error); return; }
+  motorenCache = {};
+  data.forEach(r=>{ motorenCache[r.motor_nummer]={ klant:r.klant||'', motorMerk:r.motor_merk||'', motorType:r.motor_type||'', motorNaam:r.motor_naam||'', status:r.status||'Actief' }; });
+}
+
+async function slaMotorOp(mn, klant){
+  if(!sb||!mn) return;
+  const bestaand = motorenCache[mn];
+  const nieuw = bestaand
+    ? { ...bestaand, klant: klant||bestaand.klant }
+    : { klant: klant||'', motorMerk:'', motorType:'', motorNaam:'', status:'Actief' };
+  motorenCache[mn] = nieuw;
+  await sb.from('motoren').upsert({ motor_nummer:mn, klant:nieuw.klant, motor_merk:nieuw.motorMerk, motor_type:nieuw.motorType, motor_naam:nieuw.motorNaam, status:nieuw.status, updated_at:new Date().toISOString() });
+}
+
+// ── AUTOCOMPLETE ──────────────────────────────────────────────────────────────
+function acMotorNummers(){ return Object.keys(motorenCache).filter(Boolean).sort(); }
+function acKlanten(){ return [...new Set(Object.values(motorenCache).map(m=>m.klant).filter(Boolean))].sort(); }
+
+function acInline(el, getVals, onAccept){
+  el.addEventListener('input', function(e){
+    if(e.inputType&&(e.inputType.startsWith('delete')||e.inputType==='insertFromPaste')) return;
+    const val=this.value; if(!val) return;
+    const match=getVals().find(s=>s.toLowerCase().startsWith(val.toLowerCase()));
+    if(!match||match.toLowerCase()===val.toLowerCase()){ if(match&&onAccept) onAccept(match); return; }
+    const start=val.length;
+    this.value=match; this.setSelectionRange(start,match.length);
+  });
+  el.addEventListener('keydown', function(e){
+    if((e.key==='Enter'||e.key==='Tab')&&this.selectionStart!==this.selectionEnd){
+      e.preventDefault();
+      this.setSelectionRange(this.value.length,this.value.length);
+      if(onAccept) onAccept(this.value);
+    }
+  });
+}
+
+function mnFill(mn){
+  const d = motorenCache[mn]; if(!d) return;
+  const klEl = document.getElementById('f-kl');
+  if(klEl && !klEl.value && d.klant) klEl.value = d.klant;
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function dezeMannd(){ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
@@ -143,7 +192,7 @@ function render(){
 function renderLijst(){
   const q = zoek.trim().toLowerCase();
   const gefilterd = q
-    ? revisies.filter(r=>[r.motorNummer,r.werkzaamheden,r.onderdelen].join(' ').toLowerCase().includes(q))
+    ? revisies.filter(r=>[r.motorNummer,r.klant,r.werkzaamheden,r.onderdelen].join(' ').toLowerCase().includes(q))
     : [...revisies];
 
   gefilterd.sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
@@ -207,6 +256,7 @@ function revisieKaart(r){
     <div class="rev-card-head">
       <div style="flex:1;min-width:0">
         <div class="rev-motor">${esc(r.motorNummer||'(geen motor)')}</div>
+        ${r.klant?`<div style="font-size:13px;color:#374151;font-weight:600;margin-top:1px">${esc(r.klant)}</div>`:''}
         <div class="rev-sub">
           <span>&#128197; ${fmtDatum(r.datum)}</span>
           ${r.motorUren?`<span>&#9203; ${esc(r.motorUren)} uur</span>`:''}
@@ -234,14 +284,18 @@ function renderForm(){
         <div class="form-grid">
           <div class="field">
             <label class="field-label">Motornummer *</label>
-            <input class="inp" id="f-mn" placeholder="bijv. 001" value="${esc(r.motorNummer||'')}">
+            <input class="inp" id="f-mn" placeholder="bijv. 001" value="${esc(r.motorNummer||'')}" autocomplete="off">
           </div>
+          <div class="field">
+            <label class="field-label">Klantnaam</label>
+            <input class="inp" id="f-kl" placeholder="bijv. DFK1" value="${esc(r.klant||'')}" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px">
           <div class="field">
             <label class="field-label">Datum *</label>
             <input class="inp" id="f-datum" type="date" value="${esc(r.datum||vandaag())}">
           </div>
-        </div>
-        <div class="form-grid" style="margin-top:14px">
           <div class="field">
             <label class="field-label">Motoruren</label>
             <input class="inp" id="f-uren" type="number" min="0" placeholder="bijv. 120" value="${esc(r.motorUren||'')}">
@@ -272,11 +326,14 @@ function renderForm(){
         ${!isNieuw?`<button class="btn-rood" style="margin-left:auto" onclick="verwijderRevisie('${esc(r.id)}')">Verwijderen</button>`:''}
       </div>
     </div>`;
+  acInline(document.getElementById('f-mn'), acMotorNummers, mn=>mnFill(mn));
+  document.getElementById('f-mn').addEventListener('change', e=>mnFill(e.target.value.trim()));
+  acInline(document.getElementById('f-kl'), acKlanten);
 }
 
 // ── ACTIES ────────────────────────────────────────────────────────────────────
 function nieuwRevisie(){
-  huidig = { id:uuid(), motorNummer:'', datum:vandaag(), motorUren:'', werkzaamheden:'', onderdelen:'', opmerkingen:'' };
+  huidig = { id:uuid(), motorNummer:'', klant:'', datum:vandaag(), motorUren:'', werkzaamheden:'', onderdelen:'', opmerkingen:'' };
   view = 'nieuw';
   render();
 }
@@ -299,9 +356,11 @@ function slaOp(){
     b.style.display='block';
     return;
   }
+  const klant = document.getElementById('f-kl').value.trim();
   const obj = {
     id: huidig.id,
     motorNummer: mn,
+    klant,
     datum,
     motorUren:     document.getElementById('f-uren').value.trim(),
     werkzaamheden: document.getElementById('f-werk').value.trim(),
@@ -311,6 +370,7 @@ function slaOp(){
   const idx = revisies.findIndex(r=>r.id===obj.id);
   if(idx>=0) revisies[idx]=obj; else revisies.unshift(obj);
   slaRevisies();
+  slaMotorOp(mn, klant);
   gaTerug();
 }
 
@@ -359,10 +419,11 @@ async function doLogout(){
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init(){
   try{
-    const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
     const {data:{session}}=await sb.auth.getSession();
     if(!session){window.location.href='index.html';return;}
   }catch{window.location.href='index.html';return;}
+  await laadMotoren();
   laadRevisies();
   render();
 }
