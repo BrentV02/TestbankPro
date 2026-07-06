@@ -142,9 +142,21 @@ let onderdelenAC = [];
 
 function laadRevisies(){ try{ revisies=JSON.parse(localStorage.getItem(OPSLAG)||'[]'); }catch{ revisies=[]; } }
 function slaRevisies(){ localStorage.setItem(OPSLAG, JSON.stringify(revisies)); }
-function laadOnderdelenAC(){ try{ onderdelenAC=JSON.parse(localStorage.getItem(OPSLAG_AC)||'[]'); }catch{ onderdelenAC=[]; } }
-function slaOnderdelenAC(){ localStorage.setItem(OPSLAG_AC, JSON.stringify([...new Set(onderdelenAC)].sort((a,b)=>a.localeCompare(b,'nl')))); }
-function voegOnderdeelAcToe(naam){ if(!naam||onderdelenAC.includes(naam)) return; onderdelenAC.push(naam); slaOnderdelenAC(); }
+async function laadOnderdelenAC(){
+  try{ onderdelenAC=JSON.parse(localStorage.getItem(OPSLAG_AC)||'[]'); }catch{ onderdelenAC=[]; }
+  if(!sb) return;
+  const {data,error}=await sb.from('onderdelen').select('naam').order('naam');
+  if(error){ console.error(error); return; }
+  onderdelenAC=data.map(r=>r.naam).filter(Boolean);
+  localStorage.setItem(OPSLAG_AC,JSON.stringify(onderdelenAC));
+}
+async function voegOnderdeelAcToe(naam){
+  if(!naam||onderdelenAC.includes(naam)) return;
+  onderdelenAC.push(naam);
+  onderdelenAC.sort((a,b)=>a.localeCompare(b,'nl'));
+  localStorage.setItem(OPSLAG_AC,JSON.stringify(onderdelenAC));
+  if(sb) await sb.from('onderdelen').upsert({naam});
+}
 
 function ondsArray(r){ return Array.isArray(r.onderdelen) ? r.onderdelen : (r.onderdelen?.trim() ? r.onderdelen.split('\n').map(s=>s.trim()).filter(Boolean) : []); }
 
@@ -423,7 +435,7 @@ function slaOp(){
   const motorMerk = document.getElementById('f-merk').value.trim();
   const motorType = document.getElementById('f-type').value.trim();
   const onds = [...formulierOnderdelen].sort((a,b)=>a.localeCompare(b,'nl'));
-  onds.forEach(voegOnderdeelAcToe);
+  await Promise.all(onds.map(voegOnderdeelAcToe));
   const obj = {
     id: huidig.id,
     motorNummer: mn,
@@ -493,7 +505,7 @@ async function init(){
   }catch{window.location.href='index.html';return;}
   await laadMotoren();
   laadRevisies();
-  laadOnderdelenAC();
+  await laadOnderdelenAC();
   const voorMotor = localStorage.getItem('tbp_revisie_motor');
   if(voorMotor){ localStorage.removeItem('tbp_revisie_motor'); nieuwRevisie(voorMotor); } else { render(); }
 }
