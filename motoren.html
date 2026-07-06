@@ -535,7 +535,7 @@ function renderMotorRevisies(mn){
     <td style="white-space:nowrap;color:#374151">${r.datum?fmtDt(r.datum+'T00:00:00'):'—'}</td>
     <td style="color:#6b7280">${r.motorUren?esc(r.motorUren)+' u':'—'}</td>
     <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#374151">${esc(r.werkzaamheden||'—')}</td>
-    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7280">${esc(r.onderdelen||'—')}</td>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7280">${Array.isArray(r.onderdelen)?esc(r.onderdelen.join(', '))||'—':esc(r.onderdelen||'—')}</td>
     <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7280">${esc(r.opmerkingen||'')}</td>
   </tr>`).join('');
   return `<div style="margin-top:24px">

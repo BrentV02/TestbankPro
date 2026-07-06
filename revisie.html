@@ -55,6 +55,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .rev-blok{margin-bottom:8px}
 .rev-blok-titel{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
 .rev-blok-tekst{font-size:13px;color:#374151;white-space:pre-wrap;line-height:1.5}
+.ond-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.ond-tag{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;color:#1d4ed8}
+.ond-del{background:none;border:none;cursor:pointer;color:#93c5fd;font-size:14px;padding:0;line-height:1;font-family:inherit}
+.ond-del:hover{color:#1d4ed8}
+.ond-add-row{display:flex;gap:8px;margin-top:8px}
+.ond-add-row .inp{flex:1}
 
 /* Formulier */
 .form-card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.1);padding:24px}
@@ -123,15 +129,24 @@ const vandaag = () => new Date().toISOString().slice(0,10);
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let sb = null;
-let motorenCache = {}; // { motorNummer: { klant, motorMerk, motorType, motorNaam, status } }
+let motorenCache = {};
 let revisies = [];
-let view = 'lijst'; // 'lijst' | 'nieuw' | 'edit'
+let view = 'lijst';
 let huidig = null;
 let zoek = '';
+let formulierOnderdelen = []; // onderdelen in bewerking
 
 const OPSLAG = 'tbp_revisies';
-function laadRevisies(){ try{ revisies = JSON.parse(localStorage.getItem(OPSLAG)||'[]'); }catch{ revisies=[]; } }
+const OPSLAG_AC = 'tbp_onderdelen_ac';
+let onderdelenAC = [];
+
+function laadRevisies(){ try{ revisies=JSON.parse(localStorage.getItem(OPSLAG)||'[]'); }catch{ revisies=[]; } }
 function slaRevisies(){ localStorage.setItem(OPSLAG, JSON.stringify(revisies)); }
+function laadOnderdelenAC(){ try{ onderdelenAC=JSON.parse(localStorage.getItem(OPSLAG_AC)||'[]'); }catch{ onderdelenAC=[]; } }
+function slaOnderdelenAC(){ localStorage.setItem(OPSLAG_AC, JSON.stringify([...new Set(onderdelenAC)].sort((a,b)=>a.localeCompare(b,'nl')))); }
+function voegOnderdeelAcToe(naam){ if(!naam||onderdelenAC.includes(naam)) return; onderdelenAC.push(naam); slaOnderdelenAC(); }
+
+function ondsArray(r){ return Array.isArray(r.onderdelen) ? r.onderdelen : (r.onderdelen?.trim() ? r.onderdelen.split('\n').map(s=>s.trim()).filter(Boolean) : []); }
 
 // ── MOTOR CACHE ───────────────────────────────────────────────────────────────
 async function laadMotoren(){
@@ -142,12 +157,12 @@ async function laadMotoren(){
   data.forEach(r=>{ motorenCache[r.motor_nummer]={ klant:r.klant||'', motorMerk:r.motor_merk||'', motorType:r.motor_type||'', motorNaam:r.motor_naam||'', status:r.status||'Actief' }; });
 }
 
-async function slaMotorOp(mn, klant){
+async function slaMotorOp(mn, klant, motorMerk='', motorType=''){
   if(!sb||!mn) return;
   const bestaand = motorenCache[mn];
   const nieuw = bestaand
-    ? { ...bestaand, klant: klant||bestaand.klant }
-    : { klant: klant||'', motorMerk:'', motorType:'', motorNaam:'', status:'Actief' };
+    ? { ...bestaand, klant:klant||bestaand.klant, motorMerk:motorMerk||bestaand.motorMerk, motorType:motorType||bestaand.motorType }
+    : { klant:klant||'', motorMerk:motorMerk||'', motorType:motorType||'', motorNaam:'', status:'Actief' };
   motorenCache[mn] = nieuw;
   await sb.from('motoren').upsert({ motor_nummer:mn, klant:nieuw.klant, motor_merk:nieuw.motorMerk, motor_type:nieuw.motorType, motor_naam:nieuw.motorNaam, status:nieuw.status, updated_at:new Date().toISOString() });
 }
@@ -155,6 +170,8 @@ async function slaMotorOp(mn, klant){
 // ── AUTOCOMPLETE ──────────────────────────────────────────────────────────────
 function acMotorNummers(){ return Object.keys(motorenCache).filter(Boolean).sort(); }
 function acKlanten(){ return [...new Set(Object.values(motorenCache).map(m=>m.klant).filter(Boolean))].sort(); }
+function acMotorMerken(){ return [...new Set(Object.values(motorenCache).map(m=>m.motorMerk).filter(Boolean))].sort(); }
+function acMotorTypes(){ return [...new Set(Object.values(motorenCache).map(m=>m.motorType).filter(Boolean))].sort(); }
 
 function acInline(el, getVals, onAccept){
   el.addEventListener('input', function(e){
@@ -176,8 +193,9 @@ function acInline(el, getVals, onAccept){
 
 function mnFill(mn){
   const d = motorenCache[mn]; if(!d) return;
-  const klEl = document.getElementById('f-kl');
-  if(klEl && !klEl.value && d.klant) klEl.value = d.klant;
+  const klEl=document.getElementById('f-kl'); if(klEl&&!klEl.value&&d.klant) klEl.value=d.klant;
+  const mkEl=document.getElementById('f-merk'); if(mkEl&&!mkEl.value&&d.motorMerk) mkEl.value=d.motorMerk;
+  const mtEl=document.getElementById('f-type'); if(mtEl&&!mtEl.value&&d.motorType) mtEl.value=d.motorType;
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -192,7 +210,7 @@ function render(){
 function renderLijst(){
   const q = zoek.trim().toLowerCase();
   const gefilterd = q
-    ? revisies.filter(r=>[r.motorNummer,r.klant,r.werkzaamheden,r.onderdelen].join(' ').toLowerCase().includes(q))
+    ? revisies.filter(r=>[r.motorNummer,r.klant,r.motorMerk,r.motorType,...ondsArray(r)].join(' ').toLowerCase().includes(q))
     : [...revisies];
 
   gefilterd.sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
@@ -248,27 +266,53 @@ function renderLijst(){
 }
 
 function revisieKaart(r){
-  const heeftWerk = r.werkzaamheden?.trim();
-  const heeftOnderdelen = r.onderdelen?.trim();
+  const onds = ondsArray(r);
   const heeftOpmerking = r.opmerkingen?.trim();
-  const heeftBody = heeftWerk || heeftOnderdelen || heeftOpmerking;
+  const heeftBody = onds.length || heeftOpmerking;
+  const motorInfo = [r.motorMerk, r.motorType].filter(Boolean).map(esc).join(' · ');
   return `<div class="rev-card" onclick="bewerkRevisie('${esc(r.id)}')">
     <div class="rev-card-head">
       <div style="flex:1;min-width:0">
         <div class="rev-motor">${esc(r.motorNummer||'(geen motor)')}</div>
         ${r.klant?`<div style="font-size:13px;color:#374151;font-weight:600;margin-top:1px">${esc(r.klant)}</div>`:''}
         <div class="rev-sub">
+          ${motorInfo?`<span>${motorInfo}</span>`:''}
           <span>&#128197; ${fmtDatum(r.datum)}</span>
           ${r.motorUren?`<span>&#9203; ${esc(r.motorUren)} uur</span>`:''}
         </div>
       </div>
     </div>
     ${heeftBody?`<div class="rev-body">
-      ${heeftWerk?`<div class="rev-blok"><div class="rev-blok-titel">Werkzaamheden</div><div class="rev-blok-tekst">${esc(r.werkzaamheden)}</div></div>`:''}
-      ${heeftOnderdelen?`<div class="rev-blok"><div class="rev-blok-titel">Vervangen onderdelen</div><div class="rev-blok-tekst">${esc(r.onderdelen)}</div></div>`:''}
+      ${onds.length?`<div class="rev-blok"><div class="rev-blok-titel">Vervangen onderdelen</div><div class="ond-tags">${onds.sort((a,b)=>a.localeCompare(b,'nl')).map(o=>`<span class="ond-tag">${esc(o)}</span>`).join('')}</div></div>`:''}
       ${heeftOpmerking?`<div class="rev-blok"><div class="rev-blok-titel">Opmerkingen</div><div class="rev-blok-tekst">${esc(r.opmerkingen)}</div></div>`:''}
     </div>`:''}
   </div>`;
+}
+
+function renderOnderdelenLijst(){
+  const el = document.getElementById('ond-lijst');
+  if(!el) return;
+  const sorted = [...formulierOnderdelen].sort((a,b)=>a.localeCompare(b,'nl'));
+  el.innerHTML = sorted.length
+    ? sorted.map(o=>`<span class="ond-tag">${esc(o)}<button class="ond-del" onclick="verwijderFormOnderdeel('${esc(o)}')" title="Verwijder">&#215;</button></span>`).join('')
+    : `<span style="font-size:12px;color:#9ca3af">Nog geen onderdelen toegevoegd</span>`;
+}
+
+function voegOnderdeelToe(){
+  const inp = document.getElementById('f-ond-inp');
+  if(!inp) return;
+  const naam = inp.value.trim();
+  if(!naam) return;
+  if(!formulierOnderdelen.includes(naam)) formulierOnderdelen.push(naam);
+  voegOnderdeelAcToe(naam);
+  inp.value = '';
+  inp.focus();
+  renderOnderdelenLijst();
+}
+
+function verwijderFormOnderdeel(naam){
+  formulierOnderdelen = formulierOnderdelen.filter(o=>o!==naam);
+  renderOnderdelenLijst();
 }
 
 function renderForm(){
@@ -293,6 +337,16 @@ function renderForm(){
         </div>
         <div class="form-grid" style="margin-top:14px">
           <div class="field">
+            <label class="field-label">Motor merk</label>
+            <input class="inp" id="f-merk" placeholder="bijv. Honda" value="${esc(r.motorMerk||'')}" autocomplete="off">
+          </div>
+          <div class="field">
+            <label class="field-label">Motor type</label>
+            <input class="inp" id="f-type" placeholder="bijv. X30" value="${esc(r.motorType||'')}" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="field">
             <label class="field-label">Datum *</label>
             <input class="inp" id="f-datum" type="date" value="${esc(r.datum||vandaag())}">
           </div>
@@ -305,12 +359,12 @@ function renderForm(){
 
       <div class="form-section">
         <div class="field" style="margin-bottom:14px">
-          <label class="field-label">Werkzaamheden</label>
-          <textarea class="textarea" id="f-werk" placeholder="Beschrijf wat er gedaan is…">${esc(r.werkzaamheden||'')}</textarea>
-        </div>
-        <div class="field" style="margin-bottom:14px">
           <label class="field-label">Vervangen onderdelen</label>
-          <textarea class="textarea" id="f-onderdelen" placeholder="Geef een lijst van vervangen onderdelen…">${esc(r.onderdelen||'')}</textarea>
+          <div class="ond-tags" id="ond-lijst"></div>
+          <div class="ond-add-row">
+            <input class="inp" id="f-ond-inp" placeholder="Typ onderdeel en druk Enter…" autocomplete="off">
+            <button class="btn-blauw" onclick="voegOnderdeelToe()" style="white-space:nowrap">+ Toevoegen</button>
+          </div>
         </div>
         <div class="field">
           <label class="field-label">Opmerkingen</label>
@@ -326,15 +380,22 @@ function renderForm(){
         ${!isNieuw?`<button class="btn-rood" style="margin-left:auto" onclick="verwijderRevisie('${esc(r.id)}')">Verwijderen</button>`:''}
       </div>
     </div>`;
+  renderOnderdelenLijst();
   acInline(document.getElementById('f-mn'), acMotorNummers, mn=>mnFill(mn));
   document.getElementById('f-mn').addEventListener('change', e=>mnFill(e.target.value.trim()));
   acInline(document.getElementById('f-kl'), acKlanten);
+  acInline(document.getElementById('f-merk'), acMotorMerken);
+  acInline(document.getElementById('f-type'), acMotorTypes);
+  const ondInp = document.getElementById('f-ond-inp');
+  acInline(ondInp, ()=>onderdelenAC);
+  ondInp.addEventListener('keydown', e=>{ if(e.key==='Enter'&&ondInp.selectionStart===ondInp.selectionEnd){ e.preventDefault(); voegOnderdeelToe(); } });
 }
 
 // ── ACTIES ────────────────────────────────────────────────────────────────────
 function nieuwRevisie(mn=''){
-  const klant = mn ? (motorenCache[mn]?.klant||'') : '';
-  huidig = { id:uuid(), motorNummer:mn, klant, datum:vandaag(), motorUren:'', werkzaamheden:'', onderdelen:'', opmerkingen:'' };
+  const d = mn ? motorenCache[mn] : null;
+  huidig = { id:uuid(), motorNummer:mn, klant:d?.klant||'', motorMerk:d?.motorMerk||'', motorType:d?.motorType||'', datum:vandaag(), motorUren:'', onderdelen:[], opmerkingen:'' };
+  formulierOnderdelen = [];
   view = 'nieuw';
   render();
 }
@@ -342,6 +403,7 @@ function nieuwRevisie(mn=''){
 function bewerkRevisie(id){
   huidig = revisies.find(r=>r.id===id)||null;
   if(!huidig) return;
+  formulierOnderdelen = ondsArray(huidig);
   view = 'edit';
   render();
 }
@@ -357,21 +419,26 @@ function slaOp(){
     b.style.display='block';
     return;
   }
-  const klant = document.getElementById('f-kl').value.trim();
+  const klant     = document.getElementById('f-kl').value.trim();
+  const motorMerk = document.getElementById('f-merk').value.trim();
+  const motorType = document.getElementById('f-type').value.trim();
+  const onds = [...formulierOnderdelen].sort((a,b)=>a.localeCompare(b,'nl'));
+  onds.forEach(voegOnderdeelAcToe);
   const obj = {
     id: huidig.id,
     motorNummer: mn,
     klant,
+    motorMerk,
+    motorType,
     datum,
-    motorUren:     document.getElementById('f-uren').value.trim(),
-    werkzaamheden: document.getElementById('f-werk').value.trim(),
-    onderdelen:    document.getElementById('f-onderdelen').value.trim(),
-    opmerkingen:   document.getElementById('f-op').value.trim(),
+    motorUren:   document.getElementById('f-uren').value.trim(),
+    onderdelen:  onds,
+    opmerkingen: document.getElementById('f-op').value.trim(),
   };
   const idx = revisies.findIndex(r=>r.id===obj.id);
   if(idx>=0) revisies[idx]=obj; else revisies.unshift(obj);
   slaRevisies();
-  slaMotorOp(mn, klant);
+  slaMotorOp(mn, klant, motorMerk, motorType);
   gaTerug();
 }
 
@@ -426,6 +493,7 @@ async function init(){
   }catch{window.location.href='index.html';return;}
   await laadMotoren();
   laadRevisies();
+  laadOnderdelenAC();
   const voorMotor = localStorage.getItem('tbp_revisie_motor');
   if(voorMotor){ localStorage.removeItem('tbp_revisie_motor'); nieuwRevisie(voorMotor); } else { render(); }
 }
