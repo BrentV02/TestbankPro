@@ -417,8 +417,23 @@ function renderForm(){
   acInline(document.getElementById('f-merk'), acMotorMerken);
   acInline(document.getElementById('f-type'), acMotorTypes);
   const ondInp = document.getElementById('f-ond-inp');
-  acInline(ondInp, ()=>onderdelenAC);
-  ondInp.addEventListener('keydown', e=>{ if(e.key==='Enter'&&ondInp.selectionStart===ondInp.selectionEnd){ e.preventDefault(); voegOnderdeelToe(); } });
+  ondInp.addEventListener('input', function(e){
+    if(e.inputType&&(e.inputType.startsWith('delete')||e.inputType==='insertFromPaste')) return;
+    const val=this.value; if(!val) return;
+    const match=onderdelenAC.find(s=>s.toLowerCase().startsWith(val.toLowerCase()));
+    if(!match||match.toLowerCase()===val.toLowerCase()) return;
+    this.value=match; this.setSelectionRange(val.length,match.length);
+  });
+  ondInp.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){
+      e.preventDefault();
+      if(ondInp.selectionStart!==ondInp.selectionEnd) ondInp.setSelectionRange(ondInp.value.length,ondInp.value.length);
+      voegOnderdeelToe();
+    } else if(e.key==='Tab'&&ondInp.selectionStart!==ondInp.selectionEnd){
+      e.preventDefault();
+      ondInp.setSelectionRange(ondInp.value.length,ondInp.value.length);
+    }
+  });
 }
 
 // ── ACTIES ────────────────────────────────────────────────────────────────────
