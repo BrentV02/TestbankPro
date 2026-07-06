@@ -305,6 +305,7 @@ let cameFromMotoren = false;
 let sessionOriginMotorNr = '';
 let sessieStartTijd = null;
 let sessieTimerInterval = null;
+let sessieTimerSessieId = null;
 
 // ── UUID ──────────────────────────────────────────────────────────────────────
 function uuid() {
@@ -1099,6 +1100,10 @@ function renderDetail(){
             <h2 class="page-title" style="margin:0">${esc(selected.motorNummer)}</h2>
             ${eerste?.datum?`<span style="font-size:14px;color:#374151;font-weight:600">${fmtDt(eerste.datum)}</span>`:''}
           </div>
+          ${sessieStartTijd&&selected.id===sessieTimerSessieId?`<div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+            <div id="sessie-timer" style="font-size:18px;font-weight:800;color:#1d4ed8;font-variant-numeric:tabular-nums;letter-spacing:1px">${fmtTimer(Math.floor((Date.now()-sessieStartTijd)/1000))}</div>
+            <button onclick="sluitSessie()" style="background:#ef4444;border:none;color:#fff;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⏹ Sessie afsluiten</button>
+          </div>`:''}
         </div>
         <div class="meta-selects-row">
           ${(selected.klant||effectiefCarbu(selected)||selected.motorMerk||selected.motorType||selected.motorNaam)?`<div class="detail-meta">
@@ -1423,9 +1428,32 @@ function nieuweSessie(){pendingRuns=[EMPTY_RUN()];ssPendingSave([]);navigeer('ni
 function fmtTimer(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60,p=n=>String(n).padStart(2,'0');return h>0?`${p(h)}:${p(m)}:${p(s)}`:`${p(m)}:${p(s)}`;}
 function timerTick(){const el=document.getElementById('sessie-timer');if(el&&sessieStartTijd)el.textContent=fmtTimer(Math.floor((Date.now()-sessieStartTijd)/1000));}
 function stopSessieTimer(){clearInterval(sessieTimerInterval);sessieTimerInterval=null;}
+async function sluitSessie(){
+  if(!sessieTimerSessieId||!sessieStartTijd) return;
+  const duur=Math.round((Date.now()-sessieStartTijd)/1000);
+  stopSessieTimer(); sessieStartTijd=null;
+  const id=sessieTimerSessieId; sessieTimerSessieId=null;
+  const s=sessies.find(x=>x.id===id); if(!s) return;
+  const bijgewerkt={...s,duur};
+  sessies=sessies.map(x=>x.id===id?bijgewerkt:x);
+  if(selected?.id===id) selected=bijgewerkt;
+  saveLocal(); await dbSave(bijgewerkt);
+  if(selected?.id===id) renderDetail();
+}
+async function slaTimerDuurOp(){
+  if(!sessieTimerSessieId||!sessieStartTijd) return;
+  const duur=Math.round((Date.now()-sessieStartTijd)/1000);
+  const id=sessieTimerSessieId;
+  const s=sessies.find(x=>x.id===id); if(!s) return;
+  const bijgewerkt={...s,duur};
+  sessies=sessies.map(x=>x.id===id?bijgewerkt:x);
+  if(selected?.id===id) selected=bijgewerkt;
+  saveLocal(); dbSave(bijgewerkt);
+}
 function startSessie(){
   stopSessieTimer();
   sessieStartTijd=Date.now();
+  sessieTimerSessieId=null;
   pendingRuns=[];ssPendingSave([]);navigeer('nieuw');
   sessieTimerInterval=setInterval(timerTick,1000);
 }
@@ -1604,10 +1632,8 @@ async function opslaan(){
   const motorNaam=document.getElementById('sf-mn2').value.trim();
   const g=id=>(document.getElementById(id)?.value||'').trim();
   dbMotorSave(mn,{klant,motorMerk,motorType,motorNaam});
-  const duur=sessieStartTijd?Math.round((Date.now()-sessieStartTijd)/1000):null;
-  stopSessieTimer(); sessieStartTijd=null;
   const nieuw={
-    id:uuid(), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam, duur,
+    id:uuid(), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam, duur:null,
     testType:document.getElementById('sf-tt').value,
     uitkomst:document.getElementById('sf-uk').value,
     opmerkingen:document.getElementById('sf-op').value,
@@ -1635,6 +1661,7 @@ async function opslaan(){
     ssPendingSave([]);
   }
   pendingRuns=[EMPTY_RUN()];
+  if(sessieStartTijd) sessieTimerSessieId=nieuw.id;
   navigeer('detail',nieuw);
 }
 
@@ -1872,19 +1899,21 @@ async function generatePdf(s,best){
   doc.save(`testrapport_${s.motorNummer}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
-document.getElementById('main').addEventListener('click', e=>{
+document.getElementById('main').addEventListener('click', async e=>{
   const el=e.target.closest('[data-action]');
   if(!el) return;
   const {action,id,runId}=el.dataset;
   if(action==='bekijk'){const s=sessies.find(x=>x.id==id);if(s) navigeer('detail',s);}
   else if(action==='naar-lijst') {
-    stopSessieTimer(); sessieStartTijd=null;
+    await slaTimerDuurOp();
+    stopSessieTimer(); sessieStartTijd=null; sessieTimerSessieId=null;
     if(cameFromKlanten){cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
     else if(cameFromMotoren){cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
     else navigeer('lijst');
   }
   else if(action==='naar-motor') {
-    stopSessieTimer(); sessieStartTijd=null;
+    await slaTimerDuurOp();
+    stopSessieTimer(); sessieStartTijd=null; sessieTimerSessieId=null;
     if(cameFromKlanten){cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
     else if(cameFromMotoren){cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
     else navigeer('lijst');
