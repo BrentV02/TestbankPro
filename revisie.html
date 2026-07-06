@@ -332,8 +332,9 @@ function renderForm(){
 }
 
 // ── ACTIES ────────────────────────────────────────────────────────────────────
-function nieuwRevisie(){
-  huidig = { id:uuid(), motorNummer:'', klant:'', datum:vandaag(), motorUren:'', werkzaamheden:'', onderdelen:'', opmerkingen:'' };
+function nieuwRevisie(mn=''){
+  const klant = mn ? (motorenCache[mn]?.klant||'') : '';
+  huidig = { id:uuid(), motorNummer:mn, klant, datum:vandaag(), motorUren:'', werkzaamheden:'', onderdelen:'', opmerkingen:'' };
   view = 'nieuw';
   render();
 }
@@ -425,7 +426,8 @@ async function init(){
   }catch{window.location.href='index.html';return;}
   await laadMotoren();
   laadRevisies();
-  render();
+  const voorMotor = localStorage.getItem('tbp_revisie_motor');
+  if(voorMotor){ localStorage.removeItem('tbp_revisie_motor'); nieuwRevisie(voorMotor); } else { render(); }
 }
 init();
 </script>

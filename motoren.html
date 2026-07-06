@@ -140,6 +140,8 @@ let motorenTab = 'dfk';
 let motorenZoek = '';
 let dfkIngeklapt = new Set();
 let view = 'motoren';
+let motorRevisies = [];
+function laadMotorRevisies(){ try{ motorRevisies=JSON.parse(localStorage.getItem('tbp_revisies')||'[]'); }catch{ motorRevisies=[]; } }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -523,7 +525,34 @@ function renderMotorDetail(){
     ${motorSessies.length
       ?`<div class="tbl-border"><div class="tbl-scroll"><table class="tbl"><thead><tr>${['#','Datum','Carbu','Runs','Best HP','Best Nm','Type','Status','Opmerking'].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${sessieRijen}</tbody></table></div></div>`
       :`<div class="empty-state" style="padding:32px 24px"><div style="font-size:32px;margin-bottom:8px">&#x1F4ED;</div><div style="font-weight:600;color:#374151">Nog geen sessies voor dit motor</div><div style="font-size:13px;color:#9ca3af;margin-top:4px">Ga naar Sessies om een nieuwe sessie toe te voegen.</div></div>`}
+    ${renderMotorRevisies(m.motorNummer)}
   </div>`;
+}
+
+function renderMotorRevisies(mn){
+  const rev = motorRevisies.filter(r=>r.motorNummer===mn).sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
+  const rijen = rev.map(r=>`<tr>
+    <td style="white-space:nowrap;color:#374151">${r.datum?fmtDt(r.datum+'T00:00:00'):'—'}</td>
+    <td style="color:#6b7280">${r.motorUren?esc(r.motorUren)+' u':'—'}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#374151">${esc(r.werkzaamheden||'—')}</td>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7280">${esc(r.onderdelen||'—')}</td>
+    <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6b7280">${esc(r.opmerkingen||'')}</td>
+  </tr>`).join('');
+  return `<div style="margin-top:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:#374151">Revisies (${rev.length})</div>
+      <button class="btn-sm" onclick="naarNieuweRevisie('${esc(mn)}')">+ Revisie toevoegen</button>
+    </div>
+    ${rev.length
+      ?`<div class="tbl-border"><div class="tbl-scroll"><table class="tbl"><thead><tr>${['Datum','Uren','Werkzaamheden','Vervangen onderdelen','Opmerkingen'].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rijen}</tbody></table></div></div>`
+      :`<div style="background:#f9fafb;border-radius:10px;padding:20px 18px;color:#9ca3af;font-size:13px;text-align:center">Nog geen revisies voor dit motor — <button class="btn-sm" style="margin-left:4px" onclick="naarNieuweRevisie('${esc(mn)}')">Eerste toevoegen</button></div>`
+    }
+  </div>`;
+}
+
+function naarNieuweRevisie(mn){
+  localStorage.setItem('tbp_revisie_motor', mn);
+  window.location.href='revisie.html';
 }
 
 function toggleMotorEdit(){
@@ -639,6 +668,7 @@ async function init(){
   document.getElementById('db-status').innerHTML='<span class="db-dot" style="background:#10b981"></span>Supabase';
   const[data]=await Promise.all([dbLoad(),dbMotorenLoad()]);
   sessies=data||[];
+  laadMotorRevisies();
   startRealtime();
   const openMotor=localStorage.getItem('tbp_open_motor');
   if(openMotor){
