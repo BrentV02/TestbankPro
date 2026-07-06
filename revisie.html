@@ -56,19 +56,6 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .rev-blok-titel{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
 .rev-blok-tekst{font-size:13px;color:#374151;white-space:pre-wrap;line-height:1.5}
 
-/* Badges */
-.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
-.badge-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
-.b-afgerond{background:#d1fae5;color:#065f46}.b-afgerond .badge-dot{background:#10b981}
-.b-lopend{background:#fef3c7;color:#92400e}.b-lopend .badge-dot{background:#f59e0b}
-.b-gepland{background:#e0e7ff;color:#3730a3}.b-gepland .badge-dot{background:#6366f1}
-
-.type-badge{border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
-.tb-volledig{background:#fee2e2;color:#991b1b}
-.tb-klein{background:#fef3c7;color:#92400e}
-.tb-onderhoud{background:#dbeafe;color:#1d4ed8}
-.tb-inspectie{background:#f3f4f6;color:#374151}
-
 /* Formulier */
 .form-card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.1);padding:24px}
 .form-section{margin-bottom:20px}
@@ -77,8 +64,6 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100v
 .field-label{font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.4px}
 .inp{border:1.5px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:#111827;background:#fff;transition:border-color .15s;width:100%}
 .inp:focus{outline:none;border-color:#2563eb}
-.sel{border:1.5px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:#111827;background:#fff;transition:border-color .15s;width:100%;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-.sel:focus{outline:none;border-color:#2563eb}
 .textarea{border:1.5px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:#111827;width:100%;min-height:90px;resize:vertical;line-height:1.5}
 .textarea:focus{outline:none;border-color:#2563eb}
 .actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
@@ -147,23 +132,6 @@ function laadRevisies(){ try{ revisies = JSON.parse(localStorage.getItem(OPSLAG)
 function slaRevisies(){ localStorage.setItem(OPSLAG, JSON.stringify(revisies)); }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
-const TYPE_LABELS = ['Volledige revisie','Kleine revisie','Onderhoud','Inspectie'];
-const STATUS_LABELS = ['Afgerond','Lopend','Gepland'];
-
-function typeBadgeHtml(t){
-  const cls={
-    'Volledige revisie':'tb-volledig',
-    'Kleine revisie':'tb-klein',
-    'Onderhoud':'tb-onderhoud',
-    'Inspectie':'tb-inspectie'
-  }[t]||'tb-inspectie';
-  return `<span class="type-badge ${cls}">${esc(t||'—')}</span>`;
-}
-function statusBadgeHtml(s){
-  const cls={'Afgerond':'b-afgerond','Lopend':'b-lopend','Gepland':'b-gepland'}[s]||'b-gepland';
-  return `<span class="badge ${cls}"><span class="badge-dot"></span>${esc(s||'—')}</span>`;
-}
-
 function dezeMannd(){ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
@@ -175,7 +143,7 @@ function render(){
 function renderLijst(){
   const q = zoek.trim().toLowerCase();
   const gefilterd = q
-    ? revisies.filter(r=>[r.motorNummer,r.type,r.status,r.uitgevoerdDoor,r.werkzaamheden,r.onderdelen].join(' ').toLowerCase().includes(q))
+    ? revisies.filter(r=>[r.motorNummer,r.werkzaamheden,r.onderdelen].join(' ').toLowerCase().includes(q))
     : [...revisies];
 
   gefilterd.sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
@@ -183,7 +151,6 @@ function renderLijst(){
   const dm = dezeMannd();
   const dezeM = revisies.filter(r=>(r.datum||'').startsWith(dm)).length;
   const motoren = new Set(revisies.map(r=>r.motorNummer).filter(Boolean)).size;
-  const afgerond = revisies.filter(r=>r.status==='Afgerond').length;
 
   const groepen = {};
   gefilterd.forEach(r=>{
@@ -196,7 +163,6 @@ function renderLijst(){
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-val">${revisies.length}</div><div class="stat-lbl">Revisies totaal</div></div>
       <div class="stat-card"><div class="stat-val" style="color:#2563eb">${dezeM}</div><div class="stat-lbl">Deze maand</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:#059669">${afgerond}</div><div class="stat-lbl">Afgerond</div></div>
       <div class="stat-card"><div class="stat-val">${motoren}</div><div class="stat-lbl">Motoren</div></div>
     </div>` : '';
 
@@ -243,13 +209,8 @@ function revisieKaart(r){
         <div class="rev-motor">${esc(r.motorNummer||'(geen motor)')}</div>
         <div class="rev-sub">
           <span>&#128197; ${fmtDatum(r.datum)}</span>
-          ${r.uitgevoerdDoor?`<span>&#128296; ${esc(r.uitgevoerdDoor)}</span>`:''}
           ${r.motorUren?`<span>&#9203; ${esc(r.motorUren)} uur</span>`:''}
         </div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-        ${typeBadgeHtml(r.type)}
-        ${statusBadgeHtml(r.status)}
       </div>
     </div>
     ${heeftBody?`<div class="rev-body">
@@ -281,24 +242,6 @@ function renderForm(){
           </div>
         </div>
         <div class="form-grid" style="margin-top:14px">
-          <div class="field">
-            <label class="field-label">Type revisie</label>
-            <select class="sel" id="f-type">
-              ${TYPE_LABELS.map(t=>`<option value="${esc(t)}"${r.type===t?' selected':''}>${esc(t)}</option>`).join('')}
-            </select>
-          </div>
-          <div class="field">
-            <label class="field-label">Status</label>
-            <select class="sel" id="f-status">
-              ${STATUS_LABELS.map(s=>`<option value="${esc(s)}"${r.status===s?' selected':''}>${esc(s)}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div class="form-grid" style="margin-top:14px">
-          <div class="field">
-            <label class="field-label">Uitgevoerd door</label>
-            <input class="inp" id="f-door" placeholder="Naam mechanic" value="${esc(r.uitgevoerdDoor||'')}">
-          </div>
           <div class="field">
             <label class="field-label">Motoruren</label>
             <input class="inp" id="f-uren" type="number" min="0" placeholder="bijv. 120" value="${esc(r.motorUren||'')}">
@@ -333,8 +276,7 @@ function renderForm(){
 
 // ── ACTIES ────────────────────────────────────────────────────────────────────
 function nieuwRevisie(){
-  huidig = { id:uuid(), motorNummer:'', datum:vandaag(), type:'Volledige revisie', status:'Afgerond',
-             uitgevoerdDoor:'', motorUren:'', werkzaamheden:'', onderdelen:'', opmerkingen:'' };
+  huidig = { id:uuid(), motorNummer:'', datum:vandaag(), motorUren:'', werkzaamheden:'', onderdelen:'', opmerkingen:'' };
   view = 'nieuw';
   render();
 }
@@ -361,9 +303,6 @@ function slaOp(){
     id: huidig.id,
     motorNummer: mn,
     datum,
-    type:          document.getElementById('f-type').value,
-    status:        document.getElementById('f-status').value,
-    uitgevoerdDoor:document.getElementById('f-door').value.trim(),
     motorUren:     document.getElementById('f-uren').value.trim(),
     werkzaamheden: document.getElementById('f-werk').value.trim(),
     onderdelen:    document.getElementById('f-onderdelen').value.trim(),
