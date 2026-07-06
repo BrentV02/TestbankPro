@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="logos/dfk-enginges-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ProDynoDFK">
+<title>Revisies — ProDynoDFK</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#f3f4f6;min-height:100vh;overflow-x:hidden}
+#header{background:#111827;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;gap:12px}
+.logo{display:flex;align-items:center;gap:12px;cursor:pointer;order:-1}
+.logo-name{font-weight:800;font-size:18px;letter-spacing:-0.5px}
+.nav-wrap{position:relative;flex-shrink:0;order:1}
+.nav-toggle{background:#374151;border:none;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;gap:7px;font-weight:700;font-family:inherit}
+.nav-toggle:hover{background:#4b5563}
+.nav-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#1f2937;border-radius:12px;min-width:230px;box-shadow:0 8px 32px rgba(0,0,0,.35);z-index:9999;display:none;overflow:hidden;border:1px solid #374151}
+.nav-dropdown.open{display:block}
+.nav-header{padding:10px 16px 8px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 16px;color:#d1d5db;cursor:pointer;font-size:14px;font-weight:600;border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .12s}
+.nav-item:hover{background:#374151;color:#fff}
+.nav-item.active{background:#1e3a5f;color:#60a5fa}
+.nav-divider{height:1px;background:#374151;margin:4px 0}
+#main{max-width:860px;margin:0 auto;padding:24px 16px}
+.page-title{font-size:19px;font-weight:800;margin:0}
+.head-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.btn-blauw{background:#1d4ed8;border:none;color:#fff;border-radius:8px;padding:8px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-blauw:hover{background:#1e40af}
+.btn-outline{background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;color:#374151}
+.btn-outline:hover{border-color:#2563eb;color:#2563eb}
+.btn-rood{background:#ef4444;border:none;color:#fff;border-radius:8px;padding:7px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-rood:hover{background:#dc2626}
+.btn-back{background:none;border:none;cursor:pointer;color:#6b7280;font-size:20px;padding:0;font-family:inherit}
+.empty-state{background:#fff;border-radius:12px;text-align:center;padding:48px 24px;color:#9ca3af;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-size:16px;font-weight:700;color:#374151;margin-bottom:6px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:12px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.stat-val{font-size:26px;font-weight:800}
+.stat-lbl{font-size:12px;color:#6b7280;margin-top:2px}
+
+/* Revisie cards */
+.rev-card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s}
+.rev-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.rev-card-head{padding:14px 18px;display:flex;align-items:flex-start;gap:14px}
+.rev-motor{font-size:16px;font-weight:800;color:#111827}
+.rev-sub{font-size:12px;color:#6b7280;margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+.rev-body{padding:10px 18px 14px;border-top:1px solid #f3f4f6}
+.rev-blok{margin-bottom:8px}
+.rev-blok-titel{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.rev-blok-tekst{font-size:13px;color:#374151;white-space:pre-wrap;line-height:1.5}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.badge-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.b-afgerond{background:#d1fae5;color:#065f46}.b-afgerond .badge-dot{background:#10b981}
+.b-lopend{background:#fef3c7;color:#92400e}.b-lopend .badge-dot{background:#f59e0b}
+.b-gepland{background:#e0e7ff;color:#3730a3}.b-gepland .badge-dot{background:#6366f1}
+
+.type-badge{border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.tb-volledig{background:#fee2e2;color:#991b1b}
+.tb-klein{background:#fef3c7;color:#92400e}
+.tb-onderhoud{background:#dbeafe;color:#1d4ed8}
+.tb-inspectie{background:#f3f4f6;color:#374151}
+
+/* Formulier */
+.form-card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.1);padding:24px}
+.form-section{margin-bottom:20px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.4px}
+.inp{border:1.5px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:#111827;background:#fff;transition:border-color .15s;width:100%}
+.inp:focus{outline:none;border-color:#2563eb}
+.sel{border:1.5px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:#111827;background:#fff;transition:border-color .15s;width:100%;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.sel:focus{outline:none;border-color:#2563eb}
+.textarea{border:1.5px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:#111827;width:100%;min-height:90px;resize:vertical;line-height:1.5}
+.textarea:focus{outline:none;border-color:#2563eb}
+.actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+
+/* Zoekbalk */
+.zoek-wrap{position:relative;flex:1;min-width:180px}
+.zoek-inp{border:1.5px solid #e5e7eb;border-radius:8px;padding:8px 12px 8px 34px;font-size:14px;font-family:inherit;color:#111827;width:100%;background:#fff}
+.zoek-inp:focus{outline:none;border-color:#2563eb}
+.zoek-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:15px}
+
+/* Sectie divider */
+.sectie-label{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px;padding:0 2px}
+
+@media(max-width:600px){
+  #header{height:auto;min-height:52px;padding:8px 12px;gap:8px}
+  #main{padding:12px 10px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header id="header">
+  <div style="display:flex;align-items:center;gap:10px;order:1;margin-left:auto">
+    <div class="nav-wrap">
+      <button class="nav-toggle" id="nav-toggle" onclick="toggleNav()">&#9776; <span style="font-size:13px;font-weight:700">Menu</span></button>
+      <div class="nav-dropdown" id="nav-dropdown">
+        <div class="nav-header">Navigatie</div>
+        <button class="nav-item" onclick="window.location.href='index.html'">Sessies</button>
+        <button class="nav-item" onclick="window.location.href='motoren.html'">Motoren</button>
+        <button class="nav-item" onclick="window.location.href='klanten.html'">Klanten</button>
+        <button class="nav-item" onclick="window.location.href='analyse.html'">Analyse</button>
+        <button class="nav-item" onclick="window.location.href='carburators.html'">Carburatoren</button>
+        <button class="nav-item active">Revisies</button>
+        <div class="nav-divider"></div>
+        <button class="nav-item" onclick="doLogout()">Afmelden</button>
+      </div>
+    </div>
+  </div>
+  <div class="logo" onclick="window.location.href='index.html'">
+    <img src="logos/dfk-engines-transp.png" style="height:52px;object-fit:contain;display:block">
+    <span class="logo-name">ProDynoDFK</span>
+  </div>
+</header>
+
+<div id="main"><div style="text-align:center;padding:60px;color:#6b7280">&#9203; Laden...</div></div>
+
+<script>
+const SUPABASE_URL = 'https://jonfknallwdyknxwcqww.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvbmZrbmFsbHdkeWtueHdjcXd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNDAwMjUsImV4cCI6MjA5NzgxNjAyNX0.A-uUnNT-Nlwf9ArAd56Ujml5A0XW6G0_mj8RE24On8A';
+
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function uuid(){ if(typeof crypto!=='undefined'&&crypto.randomUUID) return crypto.randomUUID(); return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:r&0x3|0x8).toString(16);}); }
+const fmtDatum = d => d ? new Date(d+'T00:00:00').toLocaleDateString('nl-NL',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+const vandaag = () => new Date().toISOString().slice(0,10);
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let revisies = [];
+let view = 'lijst'; // 'lijst' | 'nieuw' | 'edit'
+let huidig = null;
+let zoek = '';
+
+const OPSLAG = 'tbp_revisies';
+function laadRevisies(){ try{ revisies = JSON.parse(localStorage.getItem(OPSLAG)||'[]'); }catch{ revisies=[]; } }
+function slaRevisies(){ localStorage.setItem(OPSLAG, JSON.stringify(revisies)); }
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const TYPE_LABELS = ['Volledige revisie','Kleine revisie','Onderhoud','Inspectie'];
+const STATUS_LABELS = ['Afgerond','Lopend','Gepland'];
+
+function typeBadgeHtml(t){
+  const cls={
+    'Volledige revisie':'tb-volledig',
+    'Kleine revisie':'tb-klein',
+    'Onderhoud':'tb-onderhoud',
+    'Inspectie':'tb-inspectie'
+  }[t]||'tb-inspectie';
+  return `<span class="type-badge ${cls}">${esc(t||'—')}</span>`;
+}
+function statusBadgeHtml(s){
+  const cls={'Afgerond':'b-afgerond','Lopend':'b-lopend','Gepland':'b-gepland'}[s]||'b-gepland';
+  return `<span class="badge ${cls}"><span class="badge-dot"></span>${esc(s||'—')}</span>`;
+}
+
+function dezeMannd(){ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  if(view==='lijst') renderLijst();
+  else renderForm();
+}
+
+function renderLijst(){
+  const q = zoek.trim().toLowerCase();
+  const gefilterd = q
+    ? revisies.filter(r=>[r.motorNummer,r.type,r.status,r.uitgevoerdDoor,r.werkzaamheden,r.onderdelen].join(' ').toLowerCase().includes(q))
+    : [...revisies];
+
+  gefilterd.sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
+
+  const dm = dezeMannd();
+  const dezeM = revisies.filter(r=>(r.datum||'').startsWith(dm)).length;
+  const motoren = new Set(revisies.map(r=>r.motorNummer).filter(Boolean)).size;
+  const afgerond = revisies.filter(r=>r.status==='Afgerond').length;
+
+  const groepen = {};
+  gefilterd.forEach(r=>{
+    const mn = r.motorNummer?.trim() || '(geen motor)';
+    if(!groepen[mn]) groepen[mn]=[];
+    groepen[mn].push(r);
+  });
+
+  let statsHtml = revisies.length ? `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val">${revisies.length}</div><div class="stat-lbl">Revisies totaal</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#2563eb">${dezeM}</div><div class="stat-lbl">Deze maand</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#059669">${afgerond}</div><div class="stat-lbl">Afgerond</div></div>
+      <div class="stat-card"><div class="stat-val">${motoren}</div><div class="stat-lbl">Motoren</div></div>
+    </div>` : '';
+
+  let lijstHtml = '';
+  if(revisies.length===0){
+    lijstHtml = `<div class="empty-state">
+      <div class="empty-icon">&#128295;</div>
+      <div class="empty-title">Nog geen revisies</div>
+      <p style="font-size:13px;margin-top:6px">Voeg de eerste revisie toe om onderhoud bij te houden.</p>
+    </div>`;
+  } else if(gefilterd.length===0){
+    lijstHtml = `<div class="empty-state"><div class="empty-title">Geen resultaten voor "${esc(zoek)}"</div></div>`;
+  } else {
+    const sortedGroepen = Object.entries(groepen).sort(([,a],[,b])=>(b[0]?.datum||'').localeCompare(a[0]?.datum||''));
+    sortedGroepen.forEach(([mn,lijst])=>{
+      lijstHtml += `<div class="sectie-label">${esc(mn)}</div>`;
+      lijst.forEach(r=>{ lijstHtml += revisieKaart(r); });
+    });
+  }
+
+  document.getElementById('main').innerHTML = `
+    <div class="head-row">
+      <h2 class="page-title">Revisies</h2>
+      <div class="zoek-wrap">
+        <span class="zoek-icon">&#128269;</span>
+        <input class="zoek-inp" id="zoek-inp" placeholder="Zoek op motor, type, mechanic…" value="${esc(zoek)}">
+      </div>
+      <button class="btn-blauw" onclick="nieuwRevisie()">+ Nieuwe revisie</button>
+    </div>
+    ${statsHtml}
+    ${lijstHtml}`;
+
+  document.getElementById('zoek-inp')?.addEventListener('input', e=>{ zoek=e.target.value; render(); document.getElementById('zoek-inp')?.focus(); });
+}
+
+function revisieKaart(r){
+  const heeftWerk = r.werkzaamheden?.trim();
+  const heeftOnderdelen = r.onderdelen?.trim();
+  const heeftOpmerking = r.opmerkingen?.trim();
+  const heeftBody = heeftWerk || heeftOnderdelen || heeftOpmerking;
+  return `<div class="rev-card" onclick="bewerkRevisie('${esc(r.id)}')">
+    <div class="rev-card-head">
+      <div style="flex:1;min-width:0">
+        <div class="rev-motor">${esc(r.motorNummer||'(geen motor)')}</div>
+        <div class="rev-sub">
+          <span>&#128197; ${fmtDatum(r.datum)}</span>
+          ${r.uitgevoerdDoor?`<span>&#128296; ${esc(r.uitgevoerdDoor)}</span>`:''}
+          ${r.motorUren?`<span>&#9203; ${esc(r.motorUren)} uur</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+        ${typeBadgeHtml(r.type)}
+        ${statusBadgeHtml(r.status)}
+      </div>
+    </div>
+    ${heeftBody?`<div class="rev-body">
+      ${heeftWerk?`<div class="rev-blok"><div class="rev-blok-titel">Werkzaamheden</div><div class="rev-blok-tekst">${esc(r.werkzaamheden)}</div></div>`:''}
+      ${heeftOnderdelen?`<div class="rev-blok"><div class="rev-blok-titel">Vervangen onderdelen</div><div class="rev-blok-tekst">${esc(r.onderdelen)}</div></div>`:''}
+      ${heeftOpmerking?`<div class="rev-blok"><div class="rev-blok-titel">Opmerkingen</div><div class="rev-blok-tekst">${esc(r.opmerkingen)}</div></div>`:''}
+    </div>`:''}
+  </div>`;
+}
+
+function renderForm(){
+  const isNieuw = view==='nieuw';
+  const r = huidig || {};
+  document.getElementById('main').innerHTML = `
+    <div class="head-row" style="margin-bottom:20px">
+      <button class="btn-back" onclick="gaTerug()">&#8592;</button>
+      <h2 class="page-title">${isNieuw?'Nieuwe revisie':'Revisie bewerken'}</h2>
+    </div>
+    <div class="form-card">
+      <div class="form-section">
+        <div class="form-grid">
+          <div class="field">
+            <label class="field-label">Motornummer *</label>
+            <input class="inp" id="f-mn" placeholder="bijv. 001" value="${esc(r.motorNummer||'')}">
+          </div>
+          <div class="field">
+            <label class="field-label">Datum *</label>
+            <input class="inp" id="f-datum" type="date" value="${esc(r.datum||vandaag())}">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="field">
+            <label class="field-label">Type revisie</label>
+            <select class="sel" id="f-type">
+              ${TYPE_LABELS.map(t=>`<option value="${esc(t)}"${r.type===t?' selected':''}>${esc(t)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Status</label>
+            <select class="sel" id="f-status">
+              ${STATUS_LABELS.map(s=>`<option value="${esc(s)}"${r.status===s?' selected':''}>${esc(s)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="field">
+            <label class="field-label">Uitgevoerd door</label>
+            <input class="inp" id="f-door" placeholder="Naam mechanic" value="${esc(r.uitgevoerdDoor||'')}">
+          </div>
+          <div class="field">
+            <label class="field-label">Motoruren</label>
+            <input class="inp" id="f-uren" type="number" min="0" placeholder="bijv. 120" value="${esc(r.motorUren||'')}">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="field" style="margin-bottom:14px">
+          <label class="field-label">Werkzaamheden</label>
+          <textarea class="textarea" id="f-werk" placeholder="Beschrijf wat er gedaan is…">${esc(r.werkzaamheden||'')}</textarea>
+        </div>
+        <div class="field" style="margin-bottom:14px">
+          <label class="field-label">Vervangen onderdelen</label>
+          <textarea class="textarea" id="f-onderdelen" placeholder="Geef een lijst van vervangen onderdelen…">${esc(r.onderdelen||'')}</textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">Opmerkingen</label>
+          <textarea class="textarea" id="f-op" placeholder="Bijzonderheden, aanbevelingen…">${esc(r.opmerkingen||'')}</textarea>
+        </div>
+      </div>
+
+      <div id="fout-box" style="display:none;background:#fee2e2;color:#991b1b;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600"></div>
+
+      <div class="actions-row">
+        <button class="btn-blauw" onclick="slaOp()">Opslaan</button>
+        <button class="btn-outline" onclick="gaTerug()">Annuleren</button>
+        ${!isNieuw?`<button class="btn-rood" style="margin-left:auto" onclick="verwijderRevisie('${esc(r.id)}')">Verwijderen</button>`:''}
+      </div>
+    </div>`;
+}
+
+// ── ACTIES ────────────────────────────────────────────────────────────────────
+function nieuwRevisie(){
+  huidig = { id:uuid(), motorNummer:'', datum:vandaag(), type:'Volledige revisie', status:'Afgerond',
+             uitgevoerdDoor:'', motorUren:'', werkzaamheden:'', onderdelen:'', opmerkingen:'' };
+  view = 'nieuw';
+  render();
+}
+
+function bewerkRevisie(id){
+  huidig = revisies.find(r=>r.id===id)||null;
+  if(!huidig) return;
+  view = 'edit';
+  render();
+}
+
+function gaTerug(){ huidig=null; view='lijst'; render(); }
+
+function slaOp(){
+  const mn = document.getElementById('f-mn').value.trim();
+  const datum = document.getElementById('f-datum').value.trim();
+  if(!mn || !datum){
+    const b=document.getElementById('fout-box');
+    b.textContent='&#9888;&#65039; Vul motornummer en datum in.';
+    b.style.display='block';
+    return;
+  }
+  const obj = {
+    id: huidig.id,
+    motorNummer: mn,
+    datum,
+    type:          document.getElementById('f-type').value,
+    status:        document.getElementById('f-status').value,
+    uitgevoerdDoor:document.getElementById('f-door').value.trim(),
+    motorUren:     document.getElementById('f-uren').value.trim(),
+    werkzaamheden: document.getElementById('f-werk').value.trim(),
+    onderdelen:    document.getElementById('f-onderdelen').value.trim(),
+    opmerkingen:   document.getElementById('f-op').value.trim(),
+  };
+  const idx = revisies.findIndex(r=>r.id===obj.id);
+  if(idx>=0) revisies[idx]=obj; else revisies.unshift(obj);
+  slaRevisies();
+  gaTerug();
+}
+
+function verwijderRevisie(id){
+  customConfirm({
+    titel:'Revisie verwijderen?',
+    tekst:'Deze revisie wordt permanent verwijderd.',
+    icoon:'&#128465;&#65039;',
+    bevestig:'Verwijderen',
+    bevestigKleur:'#ef4444',
+    onOk:()=>{
+      revisies = revisies.filter(r=>r.id!==id);
+      slaRevisies();
+      gaTerug();
+    }
+  });
+}
+
+// ── CUSTOM CONFIRM ────────────────────────────────────────────────────────────
+function customConfirm({titel='',tekst='',icoon='',bevestig='OK',bevestigKleur='#1d4ed8',onOk}={}){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  el.innerHTML=`<div style="background:#fff;border-radius:14px;padding:28px 32px;box-shadow:0 8px 40px rgba(0,0,0,0.18);max-width:340px;width:90%;text-align:center">
+    ${icoon?`<div style="font-size:32px;margin-bottom:10px">${icoon}</div>`:''}
+    <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">${titel}</div>
+    ${tekst?`<div style="font-size:13px;color:#6b7280;margin-bottom:20px">${tekst}</div>`:'<div style="margin-bottom:20px"></div>'}
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button style="background:#f3f4f6;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit" onclick="this.closest('div[style]').remove()">Annuleren</button>
+      <button style="background:${bevestigKleur};border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit" id="cc-ok">${bevestig}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  el.querySelector('#cc-ok').onclick=()=>{el.remove();onOk();};
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function toggleNav(){ document.getElementById('nav-dropdown').classList.toggle('open'); }
+document.addEventListener('click',e=>{ if(!e.target.closest('.nav-wrap')) document.getElementById('nav-dropdown')?.classList.remove('open'); });
+
+async function doLogout(){
+  try{ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); await sb.auth.signOut(); }catch{}
+  window.location.href='index.html';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init(){
+  try{
+    const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){window.location.href='index.html';return;}
+  }catch{window.location.href='index.html';return;}
+  laadRevisies();
+  render();
+}
+init();
+</script>
+</body>
+</html>
