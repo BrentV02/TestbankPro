@@ -308,6 +308,7 @@ let sessieTimerInterval = null;
 let sessieTimerSessieId = null;
 let sessiePauzeStart = null;
 let sessiePauzeeTotaal = 0;
+let _hervattData = null;
 
 // ── UUID ──────────────────────────────────────────────────────────────────────
 function uuid() {
@@ -863,7 +864,16 @@ function runCardHtml(r,idx,total){
 function renderLijst(){
   const totRuns=sessies.reduce((s,t)=>s+(t.runs?.length||0),0);
   const filtered=gefilterde();
-  let h=`<div class="stats-grid">
+  const actieveSessie=sessieTimerSessieId?sessies.find(s=>s.id===sessieTimerSessieId):null;
+  let h=`${actieveSessie?`<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:700;color:#1d4ed8">⚡ Sessie actief — ${esc(actieveSessie.motorNummer||'')}</div>
+      <div id="sessie-timer" style="font-size:18px;font-weight:800;color:#1d4ed8;font-variant-numeric:tabular-nums;margin-top:2px">${fmtTimer(Math.floor(timerElapsed()/1000))}</div>
+    </div>
+    <button onclick="hervattSessie()" style="background:#1d4ed8;border:none;color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">▶ Doorgaan met sessie</button>
+    <button onclick="sluitSessie()" style="background:none;border:1.5px solid #ef4444;color:#ef4444;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⏹ Afsluiten</button>
+  </div>`:''}
+  <div class="stats-grid">
     ${[{l:'Sessies',v:sessies.length,c:'#111827'},{l:'Totaal runs',v:totRuns,c:'#2563eb'}]
       .map(s=>`<div class="stat-card"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join('')}
   </div>
@@ -1056,6 +1066,17 @@ function renderNieuw(){
     const dl=document.getElementById('mn-list');
     if(dl) dl.innerHTML=motors.map(mn=>`<option value="${esc(mn)}">`).join('');
   });
+  if(_hervattData){
+    const d=_hervattData; _hervattData=null;
+    const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+    sv('sf-mn',d.motorNummer); sv('sf-kl',d.klant); sv('sf-mm',d.motorMerk);
+    sv('sf-mt',d.motorType); sv('sf-mn2',d.motorNaam); sv('sf-ca',d.carbu);
+    sv('sf-cvbh',d.carbuVanBaanHoog); sv('sf-cvbl',d.carbuVanBaanLaag);
+    sv('sf-cth',d.carbuTestHoog); sv('sf-ctl',d.carbuTestLaag);
+    const tt=document.getElementById('sf-tt'); if(tt) tt.value=d.testType||'Test';
+    const uk=document.getElementById('sf-uk'); if(uk) uk.value=d.uitkomst||'Geslaagd';
+    const op=document.getElementById('sf-op'); if(op) op.value=d.opmerkingen||'';
+  }
 }
 
 function fitSelect(el) {
@@ -1461,7 +1482,7 @@ async function sluitSessie(){
   sessies=sessies.map(x=>x.id===id?bijgewerkt:x);
   if(selected?.id===id) selected=bijgewerkt;
   saveLocal(); await dbSave(bijgewerkt);
-  if(selected?.id===id) renderDetail();
+  render();
 }
 async function slaTimerDuurOp(){
   if(!sessieTimerSessieId||!sessieStartTijd) return;
@@ -1472,6 +1493,14 @@ async function slaTimerDuurOp(){
   sessies=sessies.map(x=>x.id===id?bijgewerkt:x);
   if(selected?.id===id) selected=bijgewerkt;
   saveLocal(); dbSave(bijgewerkt);
+}
+function hervattSessie(){
+  if(!sessieTimerSessieId) return;
+  const s=sessies.find(x=>x.id===sessieTimerSessieId);
+  if(!s) return;
+  _hervattData=s;
+  pendingRuns=[EMPTY_RUN()]; ssPendingSave([]);
+  navigeer('nieuw');
 }
 function startSessie(){
   stopSessieTimer();
@@ -2002,18 +2031,14 @@ document.getElementById('main').addEventListener('click', async e=>{
   const {action,id,runId}=el.dataset;
   if(action==='bekijk'){const s=sessies.find(x=>x.id==id);if(s) navigeer('detail',s);}
   else if(action==='naar-lijst') {
-    await slaTimerDuurOp();
-    stopSessieTimer(); sessieStartTijd=null; sessieTimerSessieId=null;
-    if(cameFromKlanten){cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
-    else if(cameFromMotoren){cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
-    else navigeer('lijst');
+    if(cameFromKlanten){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
+    else if(cameFromMotoren){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
+    else{if(!sessieTimerSessieId){stopSessieTimer();sessieStartTijd=null;}navigeer('lijst');}
   }
   else if(action==='naar-motor') {
-    await slaTimerDuurOp();
-    stopSessieTimer(); sessieStartTijd=null; sessieTimerSessieId=null;
-    if(cameFromKlanten){cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
-    else if(cameFromMotoren){cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
-    else navigeer('lijst');
+    if(cameFromKlanten){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
+    else if(cameFromMotoren){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
+    else{if(!sessieTimerSessieId){stopSessieTimer();sessieStartTijd=null;}navigeer('lijst');}
   }
   else if(action==='opslaan') opslaan();
   else if(action==='runs-opslaan') runsOpslaan();
