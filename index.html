@@ -306,6 +306,8 @@ let sessionOriginMotorNr = '';
 let sessieStartTijd = null;
 let sessieTimerInterval = null;
 let sessieTimerSessieId = null;
+let sessiePauzeStart = null;
+let sessiePauzeeTotaal = 0;
 
 // ── UUID ──────────────────────────────────────────────────────────────────────
 function uuid() {
@@ -948,7 +950,10 @@ function renderNieuw(){
     <div class="head-row" style="margin-bottom:6px">
       <button class="btn-back" data-action="${cameFromMotoren?'naar-motor':'naar-lijst'}">←</button>
       <h2 class="page-title">${isImport?`📂 Importeren (${pendingRuns.length} run${pendingRuns.length>1?'s':''})` :'Nieuwe sessie'}</h2>
-      ${sessieStartTijd?`<div id="sessie-timer" style="font-size:20px;font-weight:800;color:#1d4ed8;font-variant-numeric:tabular-nums;letter-spacing:1px;margin-left:auto">${fmtTimer(Math.floor((Date.now()-sessieStartTijd)/1000))}</div>`:''}
+      ${sessieStartTijd?`<div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+        <div id="sessie-timer" style="font-size:20px;font-weight:800;color:#1d4ed8;font-variant-numeric:tabular-nums;letter-spacing:1px">${fmtTimer(Math.floor(timerElapsed()/1000))}</div>
+        <button id="pauze-btn" onclick="togglePauze()" style="background:${sessiePauzeStart?'#16a34a':'#6b7280'};border:none;color:#fff;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">${sessiePauzeStart?'▶ Hervatten':'⏸ Pauzeer'}</button>
+      </div>`:''}
     </div>
     ${isImport?'<p class="import-note">Vul de sessiegegevens in. De runs zijn automatisch ingelezen — controleer en pas aan waar nodig.</p>':''}
     <div class="form-section">
@@ -1027,14 +1032,17 @@ function renderNieuw(){
       </div>
     </div>`:''}
     <div id="fout-box-top" style="display:none" class="error-box"></div>
+    <div id="opslaan-feedback" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;margin-bottom:8px">✓ Runs opgeslagen</div>
     <div class="actions-row" style="margin-bottom:12px">
-      <button class="btn-blue-lg" data-action="opslaan">Sessie opslaan</button>
+      ${sessieStartTijd?`<button class="btn-blue-lg" data-action="runs-opslaan">⬇ Runs opslaan</button>`:''}
+      <button class="btn-blue-lg" data-action="opslaan" style="background:#059669">${sessieStartTijd?'✓ Sessie afsluiten':'Sessie opslaan'}</button>
       <button class="btn-outline" data-action="naar-lijst">Annuleren</button>
     </div>
     ${hasRuns?`<div id="runs-container">${pendingRuns.map((r,i)=>runCardHtml(r,i,pendingRuns.length)).join('')}</div>
     <div id="fout-box" style="display:none" class="error-box"></div>
     <div class="actions-row">
-      <button class="btn-blue-lg" data-action="opslaan">Sessie opslaan</button>
+      ${sessieStartTijd?`<button class="btn-blue-lg" data-action="runs-opslaan">⬇ Runs opslaan</button>`:''}
+      <button class="btn-blue-lg" data-action="opslaan" style="background:#059669">${sessieStartTijd?'✓ Sessie afsluiten':'Sessie opslaan'}</button>
       <button class="btn-outline" data-action="naar-lijst">Annuleren</button>
     </div>`:''}
   </div>`;
@@ -1426,11 +1434,26 @@ function restoreViewState() {
 function navigeer(newView,obj){view=newView;if(obj) selected=obj;saveViewState();render();window.scrollTo(0,0);}
 function nieuweSessie(){pendingRuns=[EMPTY_RUN()];ssPendingSave([]);navigeer('nieuw');}
 function fmtTimer(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60,p=n=>String(n).padStart(2,'0');return h>0?`${p(h)}:${p(m)}:${p(s)}`:`${p(m)}:${p(s)}`;}
-function timerTick(){const el=document.getElementById('sessie-timer');if(el&&sessieStartTijd)el.textContent=fmtTimer(Math.floor((Date.now()-sessieStartTijd)/1000));}
-function stopSessieTimer(){clearInterval(sessieTimerInterval);sessieTimerInterval=null;}
+function timerTick(){const el=document.getElementById('sessie-timer');if(el&&sessieStartTijd)el.textContent=fmtTimer(Math.floor(timerElapsed()/1000));}
+function stopSessieTimer(){clearInterval(sessieTimerInterval);sessieTimerInterval=null;sessiePauzeStart=null;sessiePauzeeTotaal=0;}
+function timerElapsed(){if(!sessieStartTijd)return 0;const now=sessiePauzeStart||Date.now();return now-sessieStartTijd-sessiePauzeeTotaal;}
+function togglePauze(){
+  if(!sessieStartTijd) return;
+  if(sessiePauzeStart){
+    sessiePauzeeTotaal+=Date.now()-sessiePauzeStart;
+    sessiePauzeStart=null;
+    if(!sessieTimerInterval) sessieTimerInterval=setInterval(timerTick,1000);
+  } else {
+    sessiePauzeStart=Date.now();
+    clearInterval(sessieTimerInterval);sessieTimerInterval=null;
+  }
+  timerTick();
+  const btn=document.getElementById('pauze-btn');
+  if(btn){btn.textContent=sessiePauzeStart?'▶ Hervatten':'⏸ Pauzeer';btn.style.background=sessiePauzeStart?'#16a34a':'#6b7280';}
+}
 async function sluitSessie(){
   if(!sessieTimerSessieId||!sessieStartTijd) return;
-  const duur=Math.round((Date.now()-sessieStartTijd)/1000);
+  const duur=Math.round(timerElapsed()/1000);
   stopSessieTimer(); sessieStartTijd=null;
   const id=sessieTimerSessieId; sessieTimerSessieId=null;
   const s=sessies.find(x=>x.id===id); if(!s) return;
@@ -1442,7 +1465,7 @@ async function sluitSessie(){
 }
 async function slaTimerDuurOp(){
   if(!sessieTimerSessieId||!sessieStartTijd) return;
-  const duur=Math.round((Date.now()-sessieStartTijd)/1000);
+  const duur=Math.round(timerElapsed()/1000);
   const id=sessieTimerSessieId;
   const s=sessies.find(x=>x.id===id); if(!s) return;
   const bijgewerkt={...s,duur};
@@ -1454,6 +1477,8 @@ function startSessie(){
   stopSessieTimer();
   sessieStartTijd=Date.now();
   sessieTimerSessieId=null;
+  sessiePauzeStart=null;
+  sessiePauzeeTotaal=0;
   pendingRuns=[];ssPendingSave([]);navigeer('nieuw');
   sessieTimerInterval=setInterval(timerTick,1000);
 }
@@ -1621,7 +1646,7 @@ async function sessieVeldBijwerken(veld, waarde) {
 }
 
 
-async function opslaan(){
+async function runsOpslaan(){
   const mn=document.getElementById('sf-mn').value.trim();
   if(!mn){const msg='⚠️ Vul een motornummer in.';['fout-box','fout-box-top'].forEach(id=>{const b=document.getElementById(id);if(b){b.textContent=msg;b.style.display='block';}});return;}
   const nieuweRuns=pendingRuns.length>0?readRunsFromDOM().filter(r=>r.vermogen||r.koppel||r.toeren||r.bestandsnaam):[];
@@ -1632,37 +1657,109 @@ async function opslaan(){
   const motorNaam=document.getElementById('sf-mn2').value.trim();
   const g=id=>(document.getElementById(id)?.value||'').trim();
   dbMotorSave(mn,{klant,motorMerk,motorType,motorNaam});
-  const nieuw={
-    id:uuid(), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam, duur:null,
-    testType:document.getElementById('sf-tt').value,
-    uitkomst:document.getElementById('sf-uk').value,
-    opmerkingen:document.getElementById('sf-op').value,
-    carbuVanBaanHoog:g('sf-cvbh'), carbuVanBaanLaag:g('sf-cvbl'),
-    carbuTestHoog:g('sf-cth'), carbuTestLaag:g('sf-ctl'),
-    runs:nieuweRuns.map(r=>({...r,id:uuid()}))
-  };
-  sessies=[nieuw,...sessies];
+  if(!sessieTimerSessieId){
+    // Eerste keer: maak sessie aan
+    const nieuw={
+      id:uuid(), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam, duur:null,
+      testType:document.getElementById('sf-tt').value,
+      uitkomst:document.getElementById('sf-uk').value,
+      opmerkingen:document.getElementById('sf-op').value,
+      carbuVanBaanHoog:g('sf-cvbh'), carbuVanBaanLaag:g('sf-cvbl'),
+      carbuTestHoog:g('sf-cth'), carbuTestLaag:g('sf-ctl'),
+      runs:nieuweRuns.map(r=>({...r,id:uuid()}))
+    };
+    sessies=[nieuw,...sessies];
+    saveLocal(); await dbSave(nieuw);
+    sessieTimerSessieId=nieuw.id;
+    selected=nieuw;
+  } else {
+    // Update bestaande sessie
+    const bestaand=sessies.find(s=>s.id===sessieTimerSessieId);
+    if(bestaand){
+      const bijgewerkt={...bestaand, motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam,
+        testType:document.getElementById('sf-tt').value,
+        uitkomst:document.getElementById('sf-uk').value,
+        opmerkingen:document.getElementById('sf-op').value,
+        carbuVanBaanHoog:g('sf-cvbh'), carbuVanBaanLaag:g('sf-cvbl'),
+        carbuTestHoog:g('sf-cth'), carbuTestLaag:g('sf-ctl'),
+        runs:[...bestaand.runs, ...nieuweRuns.map(r=>({...r,id:r.id||uuid()}))]
+      };
+      sessies=sessies.map(s=>s.id===sessieTimerSessieId?bijgewerkt:s);
+      selected=bijgewerkt;
+      saveLocal(); await dbSave(bijgewerkt);
+    }
+  }
+  // Wis run-invoervelden, toon feedback
+  pendingRuns=[EMPTY_RUN()]; ssPendingSave([]);
+  const fb=document.getElementById('opslaan-feedback');
+  if(fb){fb.style.display='block';setTimeout(()=>{fb.style.display='none';},2500);}
+  // Herrender runs zonder de rest van het formulier te resetten
+  const rc=document.getElementById('runs-container');
+  if(rc) rc.innerHTML=pendingRuns.map((r,i)=>runCardHtml(r,i,pendingRuns.length)).join('');
+  const rh=document.getElementById('runs-hdr');
+  if(rh) rh.textContent=`Runs (${pendingRuns.length})`;
+}
+
+async function opslaan(){
+  const mn=document.getElementById('sf-mn').value.trim();
+  if(!mn){const msg='⚠️ Vul een motornummer in.';['fout-box','fout-box-top'].forEach(id=>{const b=document.getElementById(id);if(b){b.textContent=msg;b.style.display='block';}});return;}
+  const extraRuns=pendingRuns.length>0?readRunsFromDOM().filter(r=>r.vermogen||r.koppel||r.toeren||r.bestandsnaam):[];
+  const klant=document.getElementById('sf-kl').value.trim();
+  const carbu=document.getElementById('sf-ca').value.trim();
+  const motorMerk=document.getElementById('sf-mm').value.trim();
+  const motorType=document.getElementById('sf-mt').value.trim();
+  const motorNaam=document.getElementById('sf-mn2').value.trim();
+  const g=id=>(document.getElementById(id)?.value||'').trim();
+  dbMotorSave(mn,{klant,motorMerk,motorType,motorNaam});
+  const duur=sessieStartTijd?Math.round(timerElapsed()/1000):null;
+  stopSessieTimer(); sessieStartTijd=null;
+  let doelSessie;
+  if(sessieTimerSessieId){
+    // Sessie bestaat al via tussentijds opslaan — update
+    const bestaand=sessies.find(s=>s.id===sessieTimerSessieId);
+    doelSessie={...(bestaand||{}), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam, duur,
+      testType:document.getElementById('sf-tt').value,
+      uitkomst:document.getElementById('sf-uk').value,
+      opmerkingen:document.getElementById('sf-op').value,
+      carbuVanBaanHoog:g('sf-cvbh'), carbuVanBaanLaag:g('sf-cvbl'),
+      carbuTestHoog:g('sf-cth'), carbuTestLaag:g('sf-ctl'),
+      runs:[...(bestaand?.runs||[]), ...extraRuns.map(r=>({...r,id:r.id||uuid()}))]
+    };
+    sessies=sessies.map(s=>s.id===sessieTimerSessieId?doelSessie:s);
+  } else {
+    // Nieuwe sessie
+    doelSessie={
+      id:uuid(), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam, duur,
+      testType:document.getElementById('sf-tt').value,
+      uitkomst:document.getElementById('sf-uk').value,
+      opmerkingen:document.getElementById('sf-op').value,
+      carbuVanBaanHoog:g('sf-cvbh'), carbuVanBaanLaag:g('sf-cvbl'),
+      carbuTestHoog:g('sf-cth'), carbuTestLaag:g('sf-ctl'),
+      runs:extraRuns.map(r=>({...r,id:uuid()}))
+    };
+    sessies=[doelSessie,...sessies];
+  }
+  sessieTimerSessieId=null;
   saveLocal();
-  await dbSave(nieuw);
+  await dbSave(doelSessie);
   // Verplaats pending screenshots naar Supabase onder de echte sessie-ID
   const pendingShots=ssGet('pending');
   if(pendingShots.length){
-    ssCache[nieuw.id]=[];
+    ssCache[doelSessie.id]=[];
     for(let i=0;i<pendingShots.length;i++){
       const item={data:pendingShots[i].data};
       if(sb){
         const {data:row,error}=await sb.from('sessie_screenshots')
-          .insert({sessie_id:nieuw.id,data:item.data,volgorde:i})
+          .insert({sessie_id:doelSessie.id,data:item.data,volgorde:i})
           .select('id').single();
         if(!error&&row) item.id=row.id;
       }
-      ssCache[nieuw.id].push(item);
+      ssCache[doelSessie.id].push(item);
     }
     ssPendingSave([]);
   }
   pendingRuns=[EMPTY_RUN()];
-  if(sessieStartTijd) sessieTimerSessieId=nieuw.id;
-  navigeer('detail',nieuw);
+  navigeer('detail',doelSessie);
 }
 
 async function verwijder(id){
@@ -1919,6 +2016,7 @@ document.getElementById('main').addEventListener('click', async e=>{
     else navigeer('lijst');
   }
   else if(action==='opslaan') opslaan();
+  else if(action==='runs-opslaan') runsOpslaan();
   else if(action==='add-run') addRun();
   else if(action==='remove-run') removeRun(runId);
   else if(action==='verwijder') verwijder(id);
