@@ -134,7 +134,8 @@ let revisies = [];
 let view = 'lijst';
 let huidig = null;
 let zoek = '';
-let formulierOnderdelen = []; // onderdelen in bewerking
+let formulierOnderdelen = [];
+let ondBewerk = null;
 
 const OPSLAG_AC = 'tbp_onderdelen_ac';
 let onderdelenAC = [];
@@ -285,6 +286,7 @@ function renderLijst(){
         <span class="zoek-icon">&#128269;</span>
         <input class="zoek-inp" id="zoek-inp" placeholder="Zoek op motor, type, mechanic…" value="${esc(zoek)}">
       </div>
+      <button class="btn-outline" onclick="openOnderdelenBeheer()">&#9881; Onderdelen</button>
       <button class="btn-blauw" onclick="nieuwRevisie()">+ Nieuwe revisie</button>
     </div>
     ${statsHtml}
@@ -483,6 +485,106 @@ function verwijderRevisie(id){
       gaTerug();
     }
   });
+}
+
+// ── ONDERDELEN BEHEER MODAL ───────────────────────────────────────────────────
+function openOnderdelenBeheer(){
+  const modal = document.createElement('div');
+  modal.id = 'ond-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:14px;width:100%;max-width:480px;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+      <div style="padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+        <div style="font-size:16px;font-weight:800;color:#111827">Onderdelen beheren</div>
+        <button onclick="sluitOnderdelenModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:#6b7280;line-height:1;padding:0">&#215;</button>
+      </div>
+      <div style="padding:14px 20px;border-bottom:1px solid #e5e7eb;flex-shrink:0">
+        <div style="display:flex;gap:8px">
+          <input class="inp" id="ond-modal-inp" placeholder="Nieuw onderdeel toevoegen…" autocomplete="off" style="flex:1">
+          <button class="btn-blauw" onclick="modalVoegToe()" style="white-space:nowrap">+ Toevoegen</button>
+        </div>
+      </div>
+      <div id="ond-modal-lijst" style="overflow-y:auto;flex:1;padding:4px 0"></div>
+    </div>`;
+  modal.addEventListener('click', e=>{ if(e.target===modal) sluitOnderdelenModal(); });
+  document.body.appendChild(modal);
+  const inp = document.getElementById('ond-modal-inp');
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); modalVoegToe(); } });
+  renderOnderdelenModal();
+}
+
+function sluitOnderdelenModal(){
+  ondBewerk = null;
+  document.getElementById('ond-modal')?.remove();
+}
+
+function renderOnderdelenModal(){
+  const lijst = document.getElementById('ond-modal-lijst');
+  if(!lijst) return;
+  const sorted = [...onderdelenAC].sort((a,b)=>a.localeCompare(b,'nl'));
+  if(!sorted.length){
+    lijst.innerHTML = `<div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px">Nog geen onderdelen opgeslagen</div>`;
+    return;
+  }
+  lijst.innerHTML = sorted.map(naam => {
+    if(ondBewerk === naam){
+      return `<div style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-bottom:1px solid #f3f4f6">
+        <input class="inp" id="ond-edit-inp" value="${esc(naam)}" style="flex:1" autocomplete="off">
+        <button class="btn-blauw" onclick="slaOndBewerking('${esc(naam)}')" style="padding:7px 14px;font-size:13px">OK</button>
+        <button class="btn-outline" onclick="annuleerOndBewerking()" style="padding:7px 14px;font-size:13px">&#215;</button>
+      </div>`;
+    }
+    return `<div style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-bottom:1px solid #f3f4f6">
+      <span style="flex:1;font-size:14px;color:#111827">${esc(naam)}</span>
+      <button onclick="startOndBewerking('${esc(naam)}')" title="Hernoemen" style="background:none;border:none;cursor:pointer;font-size:15px;color:#6b7280;padding:2px 6px">&#9998;</button>
+      <button onclick="verwijderOnderdeelDb('${esc(naam)}')" title="Verwijderen" style="background:none;border:none;cursor:pointer;font-size:15px;color:#ef4444;padding:2px 6px">&#128465;</button>
+    </div>`;
+  }).join('');
+  if(ondBewerk){
+    const inp = document.getElementById('ond-edit-inp');
+    if(inp){ inp.focus(); inp.select(); }
+    inp?.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); slaOndBewerking(ondBewerk); }
+      if(e.key==='Escape'){ annuleerOndBewerking(); }
+    });
+  }
+}
+
+async function modalVoegToe(){
+  const inp = document.getElementById('ond-modal-inp');
+  const naam = inp?.value.trim();
+  if(!naam) return;
+  await voegOnderdeelAcToe(naam);
+  if(inp) inp.value = '';
+  inp?.focus();
+  renderOnderdelenModal();
+}
+
+function startOndBewerking(naam){ ondBewerk = naam; renderOnderdelenModal(); }
+function annuleerOndBewerking(){ ondBewerk = null; renderOnderdelenModal(); }
+
+async function slaOndBewerking(oud){
+  const nieuw = document.getElementById('ond-edit-inp')?.value.trim();
+  if(!nieuw){ annuleerOndBewerking(); return; }
+  if(nieuw !== oud){
+    onderdelenAC = onderdelenAC.filter(o=>o!==oud);
+    if(!onderdelenAC.includes(nieuw)) onderdelenAC.push(nieuw);
+    onderdelenAC.sort((a,b)=>a.localeCompare(b,'nl'));
+    localStorage.setItem(OPSLAG_AC, JSON.stringify(onderdelenAC));
+    if(sb){
+      await sb.from('onderdelen').delete().eq('naam', oud);
+      await sb.from('onderdelen').upsert({naam: nieuw});
+    }
+  }
+  ondBewerk = null;
+  renderOnderdelenModal();
+}
+
+async function verwijderOnderdeelDb(naam){
+  onderdelenAC = onderdelenAC.filter(o=>o!==naam);
+  localStorage.setItem(OPSLAG_AC, JSON.stringify(onderdelenAC));
+  if(sb) await sb.from('onderdelen').delete().eq('naam', naam);
+  renderOnderdelenModal();
 }
 
 // ── CUSTOM CONFIRM ────────────────────────────────────────────────────────────
