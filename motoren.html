@@ -141,7 +141,12 @@ let motorenZoek = '';
 let dfkIngeklapt = new Set();
 let view = 'motoren';
 let motorRevisies = [];
-function laadMotorRevisies(){ try{ motorRevisies=JSON.parse(localStorage.getItem('tbp_revisies')||'[]'); }catch{ motorRevisies=[]; } }
+async function laadMotorRevisies(){
+  if(!sb){ motorRevisies=[]; return; }
+  const {data,error}=await sb.from('revisies').select('*').order('datum',{ascending:false});
+  if(error){ console.error(error); motorRevisies=[]; return; }
+  motorRevisies=data.map(r=>({ id:r.id, motorNummer:r.motor_nummer||'', klant:r.klant||'', motorMerk:r.motor_merk||'', motorType:r.motor_type||'', datum:r.datum||'', motorUren:r.motor_uren||'', onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'' }));
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -666,9 +671,8 @@ async function init(){
   const{data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   document.getElementById('db-status').innerHTML='<span class="db-dot" style="background:#10b981"></span>Supabase';
-  const[data]=await Promise.all([dbLoad(),dbMotorenLoad()]);
+  const[data]=await Promise.all([dbLoad(),dbMotorenLoad(),laadMotorRevisies()]);
   sessies=data||[];
-  laadMotorRevisies();
   startRealtime();
   const openMotor=localStorage.getItem('tbp_open_motor');
   if(openMotor){

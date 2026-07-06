@@ -136,12 +136,28 @@ let huidig = null;
 let zoek = '';
 let formulierOnderdelen = []; // onderdelen in bewerking
 
-const OPSLAG = 'tbp_revisies';
 const OPSLAG_AC = 'tbp_onderdelen_ac';
 let onderdelenAC = [];
 
-function laadRevisies(){ try{ revisies=JSON.parse(localStorage.getItem(OPSLAG)||'[]'); }catch{ revisies=[]; } }
-function slaRevisies(){ localStorage.setItem(OPSLAG, JSON.stringify(revisies)); }
+function revFromRow(r){ return { id:r.id, motorNummer:r.motor_nummer||'', klant:r.klant||'', motorMerk:r.motor_merk||'', motorType:r.motor_type||'', datum:r.datum||'', motorUren:r.motor_uren||'', onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'' }; }
+function revToRow(r){ return { id:r.id, motor_nummer:r.motorNummer||'', klant:r.klant||'', motor_merk:r.motorMerk||'', motor_type:r.motorType||'', datum:r.datum||null, motor_uren:r.motorUren||null, onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'' }; }
+
+async function laadRevisies(){
+  if(!sb){ revisies=[]; return; }
+  const {data,error}=await sb.from('revisies').select('*').order('datum',{ascending:false});
+  if(error){ console.error(error); revisies=[]; return; }
+  revisies=data.map(revFromRow);
+}
+async function dbSaveRevisie(r){
+  if(!sb) return;
+  const {error}=await sb.from('revisies').upsert(revToRow(r));
+  if(error) console.error(error);
+}
+async function dbVerwijderRevisie(id){
+  if(!sb) return;
+  const {error}=await sb.from('revisies').delete().eq('id',id);
+  if(error) console.error(error);
+}
 async function laadOnderdelenAC(){
   try{ onderdelenAC=JSON.parse(localStorage.getItem(OPSLAG_AC)||'[]'); }catch{ onderdelenAC=[]; }
   if(!sb) return;
@@ -422,7 +438,7 @@ function bewerkRevisie(id){
 
 function gaTerug(){ huidig=null; view='lijst'; render(); }
 
-function slaOp(){
+async function slaOp(){
   const mn = document.getElementById('f-mn').value.trim();
   const datum = document.getElementById('f-datum').value.trim();
   if(!mn || !datum){
@@ -449,7 +465,7 @@ function slaOp(){
   };
   const idx = revisies.findIndex(r=>r.id===obj.id);
   if(idx>=0) revisies[idx]=obj; else revisies.unshift(obj);
-  slaRevisies();
+  await dbSaveRevisie(obj);
   slaMotorOp(mn, klant, motorMerk, motorType);
   gaTerug();
 }
@@ -461,9 +477,9 @@ function verwijderRevisie(id){
     icoon:'&#128465;&#65039;',
     bevestig:'Verwijderen',
     bevestigKleur:'#ef4444',
-    onOk:()=>{
+    onOk:async()=>{
       revisies = revisies.filter(r=>r.id!==id);
-      slaRevisies();
+      await dbVerwijderRevisie(id);
       gaTerug();
     }
   });
@@ -503,9 +519,7 @@ async function init(){
     const {data:{session}}=await sb.auth.getSession();
     if(!session){window.location.href='index.html';return;}
   }catch{window.location.href='index.html';return;}
-  await laadMotoren();
-  laadRevisies();
-  await laadOnderdelenAC();
+  await Promise.all([laadMotoren(), laadRevisies(), laadOnderdelenAC()]);
   const voorMotor = localStorage.getItem('tbp_revisie_motor');
   if(voorMotor){ localStorage.removeItem('tbp_revisie_motor'); nieuwRevisie(voorMotor); } else { render(); }
 }
