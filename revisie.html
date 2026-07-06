@@ -140,8 +140,8 @@ let ondBewerk = null;
 const OPSLAG_AC = 'tbp_onderdelen_ac';
 let onderdelenAC = [];
 
-function revFromRow(r){ return { id:r.id, motorNummer:r.motor_nummer||'', klant:r.klant||'', motorMerk:r.motor_merk||'', motorType:r.motor_type||'', datum:r.datum||'', motorUren:r.motor_uren||'', onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'' }; }
-function revToRow(r){ return { id:r.id, motor_nummer:r.motorNummer||'', klant:r.klant||'', motor_merk:r.motorMerk||'', motor_type:r.motorType||'', datum:r.datum||null, motor_uren:r.motorUren||null, onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'' }; }
+function revFromRow(r){ return { id:r.id, motorNummer:r.motor_nummer||'', klant:r.klant||'', motorMerk:r.motor_merk||'', motorType:r.motor_type||'', datum:r.datum||'', motorUren:r.motor_uren||'', werkUren:r.werk_uren||'', onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'' }; }
+function revToRow(r){ return { id:r.id, motor_nummer:r.motorNummer||'', klant:r.klant||'', motor_merk:r.motorMerk||'', motor_type:r.motorType||'', datum:r.datum||null, motor_uren:r.motorUren||null, werk_uren:r.werkUren||null, onderdelen:r.onderdelen||[], opmerkingen:r.opmerkingen||'' }; }
 
 async function laadRevisies(){
   if(!sb){ revisies=[]; return; }
@@ -308,7 +308,8 @@ function revisieKaart(r){
         <div class="rev-sub">
           ${motorInfo?`<span>${motorInfo}</span>`:''}
           <span>&#128197; ${fmtDatum(r.datum)}</span>
-          ${r.motorUren?`<span>&#9203; ${esc(r.motorUren)} uur</span>`:''}
+          ${r.motorUren?`<span>&#9203; ${esc(r.motorUren)} motoruur</span>`:''}
+          ${r.werkUren?`<span>&#128336; ${esc(r.werkUren)} werkuur</span>`:''}
         </div>
       </div>
     </div>
@@ -384,6 +385,10 @@ function renderForm(){
             <label class="field-label">Motoruren</label>
             <input class="inp" id="f-uren" type="number" min="0" placeholder="bijv. 120" value="${esc(r.motorUren||'')}">
           </div>
+          <div class="field">
+            <label class="field-label">Werkuren</label>
+            <input class="inp" id="f-werkuren" type="number" min="0" step="0.5" placeholder="bijv. 3.5" value="${esc(r.werkUren||'')}">
+          </div>
         </div>
       </div>
 
@@ -439,7 +444,7 @@ function renderForm(){
 // ── ACTIES ────────────────────────────────────────────────────────────────────
 function nieuwRevisie(mn=''){
   const d = mn ? motorenCache[mn] : null;
-  huidig = { id:uuid(), motorNummer:mn, klant:d?.klant||'', motorMerk:d?.motorMerk||'', motorType:d?.motorType||'', datum:vandaag(), motorUren:'', onderdelen:[], opmerkingen:'' };
+  huidig = { id:uuid(), motorNummer:mn, klant:d?.klant||'', motorMerk:d?.motorMerk||'', motorType:d?.motorType||'', datum:vandaag(), motorUren:'', werkUren:'', onderdelen:[], opmerkingen:'' };
   formulierOnderdelen = [];
   view = 'nieuw';
   render();
@@ -477,6 +482,7 @@ async function slaOp(){
     motorType,
     datum,
     motorUren:   document.getElementById('f-uren').value.trim(),
+    werkUren:    document.getElementById('f-werkuren').value.trim(),
     onderdelen:  onds,
     opmerkingen: document.getElementById('f-op').value.trim(),
   };
