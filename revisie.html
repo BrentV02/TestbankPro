@@ -213,7 +213,7 @@ function acInline(el, getVals, onAccept){
     const match=getVals().find(s=>s.toLowerCase().startsWith(val.toLowerCase()));
     if(!match||match.toLowerCase()===val.toLowerCase()){ if(match&&onAccept) onAccept(match); return; }
     const start=val.length;
-    this.value=match; this.setSelectionRange(start,match.length);
+    const sy=window.scrollY; this.value=match; this.setSelectionRange(start,match.length); window.scrollTo(0,sy);
   });
   el.addEventListener('keydown', function(e){
     if((e.key==='Enter'||e.key==='Tab')&&this.selectionStart!==this.selectionEnd){
@@ -457,7 +457,7 @@ function renderForm(){
     const val=this.value; if(!val) return;
     const match=onderdelenAC.find(s=>s.toLowerCase().startsWith(val.toLowerCase()));
     if(!match||match.toLowerCase()===val.toLowerCase()) return;
-    this.value=match; this.setSelectionRange(val.length,match.length);
+    const sy=window.scrollY; this.value=match; this.setSelectionRange(val.length,match.length); window.scrollTo(0,sy);
   });
   ondInp.addEventListener('keydown', e=>{
     if(e.key==='Enter'){
