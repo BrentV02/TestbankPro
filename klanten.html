@@ -193,6 +193,12 @@ function getKlanten() {
     map[k].sessies.push(s);
     if (s.motorNummer) map[k].motoren.add(s.motorNummer);
   });
+  Object.entries(motorenCache).forEach(([mn, d]) => {
+    const k = d.klant || '';
+    if (!k) return;
+    if (!map[k]) map[k] = { naam: k, sessies: [], motoren: new Set() };
+    map[k].motoren.add(mn);
+  });
   return Object.values(map).sort((a, b) => {
     if (!a.naam && b.naam) return 1;
     if (a.naam && !b.naam) return -1;
