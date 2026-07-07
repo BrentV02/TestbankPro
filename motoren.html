@@ -345,6 +345,80 @@ function dfkGroepToggle(key){
 }
 function openMotorDetail(mn){selectedMotor=getMotorData(mn);navigeer('motor-detail');}
 
+function drukMotorenAf(){
+  const esc2 = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const natKey = s => s.replace(/(\d+)/g, n=>n.padStart(10,'0'));
+
+  // Bouw motorenlijst
+  const map = {};
+  Object.entries(motorenCache).forEach(([mn,d])=>{
+    if(!mn) return;
+    map[mn] = {motorNummer:mn, klant:d.klant||'', motorMerk:d.motorMerk||'', motorType:d.motorType||'', motorNaam:d.motorNaam||'', status:d.status||'Actief', sessies:[], bestHP:null};
+  });
+  sessies.forEach(s=>{
+    if(!s.motorNummer) return;
+    if(!map[s.motorNummer]) map[s.motorNummer]={motorNummer:s.motorNummer,klant:s.klant||'',motorMerk:s.motorMerk||'',motorType:s.motorType||'',motorNaam:s.motorNaam||'',status:'Actief',sessies:[],bestHP:null};
+    const m=map[s.motorNummer];
+    if(!m.klant) m.klant=s.klant||'';
+    m.sessies.push(s);
+    const best=bestRun(s.runs);
+    if(best?.vermogen&&(!m.bestHP||best.vermogen>m.bestHP)) m.bestHP=best.vermogen;
+  });
+  const motoren = Object.values(map).filter(m=>(m.status||'Actief')==='Actief');
+  const isDfk = m=>!m.klant||m.klant.toLowerCase()==='dfk';
+  const dfk = motoren.filter(isDfk).sort((a,b)=>natKey(a.motorNaam||'').localeCompare(natKey(b.motorNaam||''),'nl'));
+  const klant = motoren.filter(m=>!isDfk(m)).sort((a,b)=>a.klant.localeCompare(b.klant,'nl')||natKey(a.motorNummer).localeCompare(natKey(b.motorNummer)));
+
+  const rij = (m, toonKlant) => `<tr>
+    <td>${esc2(m.motorNummer)}</td>
+    ${toonKlant?`<td>${esc2(m.klant)}</td>`:''}
+    <td>${esc2(m.motorMerk)}</td>
+    <td>${esc2(m.motorType)}</td>
+    <td>${esc2(m.motorNaam)}</td>
+    <td style="text-align:right;font-weight:700;color:#1d4ed8">${m.bestHP?m.bestHP+' HP':'—'}</td>
+    <td style="text-align:right">${m.sessies.length}</td>
+  </tr>`;
+
+  const tabel = (lijst, toonKlant) => `<table>
+    <thead><tr>
+      <th>Motornummer</th>
+      ${toonKlant?'<th>Klant</th>':''}
+      <th>Merk</th><th>Type</th><th>Naam</th>
+      <th style="text-align:right">Best HP</th>
+      <th style="text-align:right">Sessies</th>
+    </tr></thead>
+    <tbody>${lijst.map(m=>rij(m,toonKlant)).join('')}</tbody>
+  </table>`;
+
+  const datum = new Date().toLocaleDateString('nl-NL',{day:'2-digit',month:'long',year:'numeric'});
+  const html = `<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8">
+  <title>Motorenlijst – ProDynoDFK</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:24px 32px}
+    h1{font-size:20px;font-weight:800;margin-bottom:4px}
+    .sub{font-size:12px;color:#6b7280;margin-bottom:20px}
+    h2{font-size:14px;font-weight:700;margin:20px 0 8px;padding-bottom:4px;border-bottom:2px solid #1d4ed8;color:#1d4ed8}
+    table{width:100%;border-collapse:collapse;margin-bottom:8px}
+    th{background:#f1f5f9;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:6px 8px;border:1px solid #e2e8f0;text-align:left}
+    td{padding:6px 8px;border:1px solid #e2e8f0;vertical-align:middle}
+    tr:nth-child(even) td{background:#f8fafc}
+    .footer{margin-top:24px;font-size:10px;color:#9ca3af;text-align:right}
+    @media print{@page{margin:1.5cm}body{padding:0}}
+  </style></head><body>
+  <h1>Motorenlijst – ProDynoDFK</h1>
+  <div class="sub">Afgedrukt op ${datum} · ${motoren.length} actieve motoren</div>
+  ${dfk.length?`<h2>DFK Motoren (${dfk.length})</h2>${tabel(dfk,false)}`:''}
+  ${klant.length?`<h2>Klantmotoren (${klant.length})</h2>${tabel(klant,true)}`:''}
+  <div class="footer">ProDynoDFK – Motorenlijst</div>
+  <script>window.onload=()=>{ window.print(); }<\/script>
+  </body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
 function renderMotoren(){
   const map={};
   Object.entries(motorenCache).forEach(([mn,saved])=>{
@@ -435,7 +509,10 @@ function renderMotoren(){
         <div style="font-size:20px;font-weight:800;color:#111827">Motoren</div>
         <div style="font-size:13px;color:#6b7280;margin-top:2px">${actiefMotoren.length} actief${archiefMotoren.length?` · ${archiefMotoren.length} gearchiveerd`:''}</div>
       </div>
-      <button class="btn btn-blue" onclick="navigeer('motor-nieuw')">+ Motor toevoegen</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-outline" onclick="drukMotorenAf()">&#128438; PDF afdrukken</button>
+        <button class="btn btn-blue" onclick="navigeer('motor-nieuw')">+ Motor toevoegen</button>
+      </div>
     </div>
     <input class="inp" id="motoren-zoek" value="${esc(motorenZoek)}" placeholder="Zoek op motornummer, naam of klant..." style="width:100%;margin-bottom:16px">
     ${!actiefMotoren.length&&!archiefMotoren.length
