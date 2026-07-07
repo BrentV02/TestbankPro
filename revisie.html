@@ -421,8 +421,11 @@ function renderForm(){
           <label class="field-label">Vervangen onderdelen</label>
           <div class="ond-tags" id="ond-lijst"></div>
           <div class="ond-add-row">
-            <input class="inp" id="f-ond-inp" placeholder="Typ onderdeel en druk Enter…" autocomplete="off">
-            <button class="btn-blauw" onclick="openOnderdelenPicker()" style="white-space:nowrap">&#128269; Kies uit lijst</button>
+            <div style="position:relative;flex:1">
+              <input class="inp" id="f-ond-inp" placeholder="Typ onderdeel…" autocomplete="off" style="width:100%">
+              <div id="f-ond-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #2563eb;border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,.15)"></div>
+            </div>
+            <button class="btn-blauw" onclick="openOnderdelenPicker()" style="white-space:nowrap">&#128269; Lijst</button>
           </div>
         </div>
         <div class="field">
@@ -452,23 +455,33 @@ function renderForm(){
   acInline(document.getElementById('f-merk'), acMotorMerken);
   acInline(document.getElementById('f-type'), acMotorTypes);
   const ondInp = document.getElementById('f-ond-inp');
-  ondInp.addEventListener('input', function(e){
-    if(e.inputType&&(e.inputType.startsWith('delete')||e.inputType==='insertFromPaste')) return;
-    const val=this.value; if(!val) return;
-    const match=onderdelenAC.find(s=>s.toLowerCase().startsWith(val.toLowerCase()));
-    if(!match||match.toLowerCase()===val.toLowerCase()) return;
-    const sy=window.scrollY; this.value=match; this.setSelectionRange(val.length,match.length); window.scrollTo(0,sy);
-  });
+  const ondDd  = document.getElementById('f-ond-dd');
+  function sluitOndDd(){ ondDd.style.display='none'; ondDd.innerHTML=''; }
+  function renderOndDd(){
+    const val = ondInp.value.trim();
+    if(!val){ sluitOndDd(); return; }
+    const matches = onderdelenAC.filter(s=>s.toLowerCase().includes(val.toLowerCase()));
+    if(!matches.length){ sluitOndDd(); return; }
+    ondDd.style.display = 'block';
+    ondDd.innerHTML = matches.map(naam=>`<div data-naam="${esc(naam)}" style="padding:10px 12px;cursor:pointer;font-size:14px;color:#111827;border-bottom:1px solid #f3f4f6">${esc(naam)}</div>`).join('');
+    ondDd.querySelectorAll('div').forEach(el=>{
+      el.addEventListener('mousedown', e=>{ e.preventDefault(); kiesOnderdeel(el.dataset.naam); });
+      el.addEventListener('touchend',  e=>{ e.preventDefault(); kiesOnderdeel(el.dataset.naam); });
+      el.addEventListener('mouseenter',()=>el.style.background='#eff6ff');
+      el.addEventListener('mouseleave',()=>el.style.background='');
+    });
+  }
+  function kiesOnderdeel(naam){
+    if(!formulierOnderdelen.includes(naam)) formulierOnderdelen.push(naam);
+    voegOnderdeelAcToe(naam);
+    ondInp.value=''; sluitOndDd(); ondInp.focus(); renderOnderdelenLijst();
+  }
+  ondInp.addEventListener('input', renderOndDd);
   ondInp.addEventListener('keydown', e=>{
-    if(e.key==='Enter'){
-      e.preventDefault();
-      if(ondInp.selectionStart!==ondInp.selectionEnd) ondInp.setSelectionRange(ondInp.value.length,ondInp.value.length);
-      voegOnderdeelToe();
-    } else if(e.key==='Tab'&&ondInp.selectionStart!==ondInp.selectionEnd){
-      e.preventDefault();
-      ondInp.setSelectionRange(ondInp.value.length,ondInp.value.length);
-    }
+    if(e.key==='Enter'){ e.preventDefault(); voegOnderdeelToe(); sluitOndDd(); }
+    else if(e.key==='Escape'){ sluitOndDd(); }
   });
+  ondInp.addEventListener('blur', ()=>setTimeout(sluitOndDd, 150));
 }
 
 // ── ACTIES ────────────────────────────────────────────────────────────────────
