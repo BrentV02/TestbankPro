@@ -366,8 +366,9 @@ function drukMotorenAf(){
   });
   const motoren = Object.values(map).filter(m=>(m.status||'Actief')==='Actief');
   const isDfk = m=>!m.klant||m.klant.toLowerCase()==='dfk';
-  const dfk = motoren.filter(isDfk).sort((a,b)=>natKey(a.motorNaam||'').localeCompare(natKey(b.motorNaam||''),'nl'));
-  const klant = motoren.filter(m=>!isDfk(m)).sort((a,b)=>a.klant.localeCompare(b.klant,'nl')||natKey(a.motorNummer).localeCompare(natKey(b.motorNummer)));
+  const sortType = (a,b)=>(a.motorType||'').localeCompare(b.motorType||'','nl')||natKey(a.motorNummer).localeCompare(natKey(b.motorNummer));
+  const dfk = motoren.filter(isDfk).sort(sortType);
+  const klant = motoren.filter(m=>!isDfk(m)).sort((a,b)=>a.klant.localeCompare(b.klant,'nl')||sortType(a,b));
 
   const rij = (m, toonKlant) => `<tr>
     <td>${esc2(m.motorNummer)}</td>
