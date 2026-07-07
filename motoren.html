@@ -410,7 +410,7 @@ function drukMotorenAf(){
   <h1>Motorenlijst – ProDynoDFK</h1>
   <div class="sub">Afgedrukt op ${datum} · ${motoren.length} actieve motoren</div>
   ${dfk.length?`<h2>DFK Motoren (${dfk.length})</h2>${tabel(dfk,false)}`:''}
-  ${klant.length?`<h2>Klantmotoren (${klant.length})</h2>${tabel(klant,true)}`:''}
+  ${klant.length?`<h2 style="page-break-before:always">Klantmotoren (${klant.length})</h2>${tabel(klant,true)}`:''}
   <div class="footer">ProDynoDFK – Motorenlijst</div>
   <script>window.onload=()=>{ window.print(); }<\/script>
   </body></html>`;
