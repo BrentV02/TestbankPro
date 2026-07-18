@@ -578,9 +578,11 @@ function startRealtime() {
         if (selected?.id === payload.old.id) { selected = null; view = 'lijst'; }
         saveLocal();
       }
-      const sy = window.scrollY;
-      render();
-      window.scrollTo({ top: sy, behavior: 'instant' });
+      if (view !== 'nieuw') {
+        const sy = window.scrollY;
+        render();
+        window.scrollTo({ top: sy, behavior: 'instant' });
+      }
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'motoren' }, payload => {
       if (payload.eventType === 'DELETE') {
