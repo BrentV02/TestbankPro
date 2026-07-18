@@ -955,9 +955,32 @@ function renderLijst(){
   document.getElementById('upzone').addEventListener('click',()=>document.getElementById('file-input').click());
 }
 
+function renderSavedRunsInForm(){
+  const sessie = sessies.find(s=>s.id===sessieTimerSessieId);
+  const savedRuns = sessie ? sortedRuns(sessie.runs) : [];
+  const best = bestRun(savedRuns);
+  const rh = document.getElementById('runs-hdr');
+  if(rh) rh.textContent = `Opgeslagen runs (${savedRuns.length})`;
+  const rc = document.getElementById('runs-container');
+  if(!rc) return;
+  rc.innerHTML = savedRuns.length
+    ? `<div class="tbl-border"><div class="tbl-scroll"><table class="tbl">
+        <thead><tr>${['#','Tijd','Carbu','Vermogen','Koppel','Opmerking'].map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${savedRuns.map((r,i)=>`<tr ${best&&r.id===best.id?'class="best-row"':''}>
+          <td style="color:#9ca3af;font-weight:600">${i+1}</td>
+          <td style="white-space:nowrap;color:#374151">${fmtTime(r.datum)}</td>
+          <td style="color:#374151;font-weight:600">${r.carbu?esc(r.carbu):'<span style="color:#d1d5db">—</span>'}</td>
+          <td><span style="font-weight:${best&&r.id===best.id?800:600};color:${best&&r.id===best.id?'#2563eb':'#111827'}">${r.vermogen||'—'} <span style="font-size:11px;font-weight:400">HP</span></span></td>
+          <td><span style="font-weight:600;color:#111827">${r.koppel||'—'} <span style="font-size:11px;font-weight:400">Nm</span></span></td>
+          <td style="color:#6b7280">${esc(r.opmerkingen||'')}</td>
+        </tr>`).join('')}
+        </tbody></table></div></div>`
+    : '<div style="color:#9ca3af;font-size:13px;padding:8px 0">Nog geen runs opgeslagen.</div>';
+}
+
 function renderNieuw(){
   const isImport=pendingRuns.some(r=>r.bestandsnaam);
-  const hasRuns=pendingRuns.length>0;
+  const hasRuns=pendingRuns.length>0||!!sessieTimerSessieId;
   document.getElementById('main').innerHTML=`
   <div class="form-card">
     <div class="head-row" style="margin-bottom:6px">
@@ -1734,15 +1757,11 @@ async function runsOpslaan(){
       saveLocal(); await dbSave(bijgewerkt);
     }
   }
-  // Wis run-invoervelden, toon feedback
-  pendingRuns=[EMPTY_RUN()]; ssPendingSave([]);
+  // Wis run-invoervelden, toon feedback, toon opgeslagen runs
+  pendingRuns=[]; ssPendingSave([]);
   const fb=document.getElementById('opslaan-feedback');
   if(fb){fb.style.display='block';setTimeout(()=>{fb.style.display='none';},2500);}
-  // Herrender runs zonder de rest van het formulier te resetten
-  const rc=document.getElementById('runs-container');
-  if(rc) rc.innerHTML=pendingRuns.map((r,i)=>runCardHtml(r,i,pendingRuns.length)).join('');
-  const rh=document.getElementById('runs-hdr');
-  if(rh) rh.textContent=`Runs (${pendingRuns.length})`;
+  renderSavedRunsInForm();
 }
 
 async function opslaan(){
