@@ -981,6 +981,7 @@ function renderSavedRunsInForm(){
 function renderNieuw(){
   const isImport=pendingRuns.some(r=>r.bestandsnaam);
   const hasRuns=pendingRuns.length>0||!!sessieTimerSessieId;
+  const pf=sessieTimerSessieId&&selected?selected:null;
   document.getElementById('main').innerHTML=`
   <div class="form-card">
     <div class="head-row" style="margin-bottom:6px">
@@ -993,42 +994,42 @@ function renderNieuw(){
     </div>
     ${isImport?'<p class="import-note">Vul de sessiegegevens in. De runs zijn automatisch ingelezen — controleer en pas aan waar nodig.</p>':''}
     <div class="form-section">
-      <div class="field" style="margin-bottom:14px"><label class="field-label">Klantnaam</label><input class="inp" id="sf-kl" placeholder="bijv. DFK1" autocomplete="off"></div>
+      <div class="field" style="margin-bottom:14px"><label class="field-label">Klantnaam</label><input class="inp" id="sf-kl" placeholder="bijv. DFK1" autocomplete="off" value="${esc(pf?.klant||'')}"></div>
       <div class="form-grid">
-        <div class="field"><label class="field-label">Motornummer *</label><input class="inp" id="sf-mn" placeholder="bijv. X30-2025-042" autocomplete="off" list="mn-list"><datalist id="mn-list"></datalist></div>
-        <div class="field"><label class="field-label">Motor merk</label><input class="inp" id="sf-mm" placeholder="bijv. IAME" autocomplete="off"></div>
-        <div class="field"><label class="field-label">Motor type</label><input class="inp" id="sf-mt" placeholder="bijv. X30" autocomplete="off"></div>
-        <div class="field"><label class="field-label">Motor naam specifiek</label><input class="inp" id="sf-mn2" placeholder="bijv. X30 Senior 2025" autocomplete="off"></div>
+        <div class="field"><label class="field-label">Motornummer *</label><input class="inp" id="sf-mn" placeholder="bijv. X30-2025-042" autocomplete="off" list="mn-list" value="${esc(pf?.motorNummer||'')}"><datalist id="mn-list"></datalist></div>
+        <div class="field"><label class="field-label">Motor merk</label><input class="inp" id="sf-mm" placeholder="bijv. IAME" autocomplete="off" value="${esc(pf?.motorMerk||'')}"></div>
+        <div class="field"><label class="field-label">Motor type</label><input class="inp" id="sf-mt" placeholder="bijv. X30" autocomplete="off" value="${esc(pf?.motorType||'')}"></div>
+        <div class="field"><label class="field-label">Motor naam specifiek</label><input class="inp" id="sf-mn2" placeholder="bijv. X30 Senior 2025" autocomplete="off" value="${esc(pf?.motorNaam||'')}"></div>
       </div>
       <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
-        <div class="field"><label class="field-label">Carburateur</label><input class="inp" id="sf-ca" placeholder="bijv. Tillotson HW-27A" autocomplete="off"></div>
+        <div class="field"><label class="field-label">Carburateur</label><input class="inp" id="sf-ca" placeholder="bijv. Tillotson HW-27A" autocomplete="off" value="${esc(pf?.carbu||'')}"></div>
       </div>
       <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div style="background:#f3f4f6;border-radius:8px;padding:12px">
           <div class="sec-label" style="margin-bottom:10px">Carbu setting van de baan</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div class="field"><label class="field-label">Hoog</label><input type="text" class="inp" id="sf-cvbh" placeholder="bijv. 1¼" autocomplete="off"></div>
-            <div class="field"><label class="field-label">Laag</label><input type="text" class="inp" id="sf-cvbl" placeholder="bijv. 1" autocomplete="off"></div>
+            <div class="field"><label class="field-label">Hoog</label><input type="text" class="inp" id="sf-cvbh" placeholder="bijv. 1¼" autocomplete="off" value="${esc(pf?.carbuVanBaanHoog||'')}"></div>
+            <div class="field"><label class="field-label">Laag</label><input type="text" class="inp" id="sf-cvbl" placeholder="bijv. 1" autocomplete="off" value="${esc(pf?.carbuVanBaanLaag||'')}"></div>
           </div>
         </div>
         <div style="background:#eff6ff;border-radius:8px;padding:12px;border:1.5px solid #bfdbfe">
           <div class="sec-label" style="margin-bottom:10px;color:#1d4ed8">Carbu setting voor de test</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div class="field"><label class="field-label">Hoog</label><input type="text" class="inp" id="sf-cth" placeholder="bijv. 1¼" autocomplete="off"></div>
-            <div class="field"><label class="field-label">Laag</label><input type="text" class="inp" id="sf-ctl" placeholder="bijv. 1" autocomplete="off"></div>
+            <div class="field"><label class="field-label">Hoog</label><input type="text" class="inp" id="sf-cth" placeholder="bijv. 1¼" autocomplete="off" value="${esc(pf?.carbuTestHoog||'')}"></div>
+            <div class="field"><label class="field-label">Laag</label><input type="text" class="inp" id="sf-ctl" placeholder="bijv. 1" autocomplete="off" value="${esc(pf?.carbuTestLaag||'')}"></div>
           </div>
         </div>
       </div>
       <div class="form-grid" style="margin-top:14px">
         <div class="field"><label class="field-label">Testtype</label>
-          <select class="inp sel" id="sf-tt">${TESTTYPEN.map(t=>`<option>${esc(t)}</option>`).join('')}</select>
+          <select class="inp sel" id="sf-tt">${TESTTYPEN.map(t=>`<option${pf?.testType===t?' selected':''}>${esc(t)}</option>`).join('')}</select>
         </div>
         <div class="field"><label class="field-label">Uitkomst</label>
-          <select class="inp sel" id="sf-uk"><option>Geslaagd</option><option>Afgekeurd</option><option>Lopend</option></select>
+          <select class="inp sel" id="sf-uk">${['Geslaagd','Afgekeurd','Lopend'].map(o=>`<option${pf?.uitkomst===o?' selected':''}>${o}</option>`).join('')}</select>
         </div>
       </div>
       <div style="margin-top:14px"><div class="field"><label class="field-label">Sessie opmerkingen</label>
-        <textarea class="inp" id="sf-op" rows="2" placeholder="Algemene bevindingen..." style="resize:vertical"></textarea>
+        <textarea class="inp" id="sf-op" rows="2" placeholder="Algemene bevindingen..." style="resize:vertical">${esc(pf?.opmerkingen||'')}</textarea>
       </div></div>
     </div>
     <div id="spx-form-wrap" style="margin-bottom:18px">
@@ -1103,6 +1104,7 @@ function renderNieuw(){
     const uk=document.getElementById('sf-uk'); if(uk) uk.value=d.uitkomst||'Geslaagd';
     const op=document.getElementById('sf-op'); if(op) op.value=d.opmerkingen||'';
   }
+  if(pf) renderSavedRunsInForm();
 }
 
 function fitSelect(el) {
@@ -1474,8 +1476,13 @@ function restoreViewState() {
     // Als geselecteerde sessie niet meer bestaat, val terug naar overzicht
     if (view === 'detail' && !selected) view = 'lijst';
     if (view === 'motoren' || view === 'motor-detail' || view === 'motor-nieuw') view = 'lijst';
-    // Nieuw-sessie pagina bij refresh altijd terug naar lijst (runs zijn verloren)
-    if (view === 'nieuw') { view = 'lijst'; ssPendingSave([]); }
+    // Nieuw-sessie pagina: herstel als actieve sessie bestaat, anders terug naar lijst
+    if (view === 'nieuw') {
+      const actief = localStorage.getItem('tbp_active_sessie');
+      const s = actief ? sessies.find(x => x.id === actief) : null;
+      if (s) { sessieTimerSessieId = actief; selected = s; pendingRuns = []; }
+      else { localStorage.removeItem('tbp_active_sessie'); view = 'lijst'; ssPendingSave([]); }
+    }
   } catch(e) {}
 }
 
@@ -1740,6 +1747,7 @@ async function runsOpslaan(){
     saveLocal(); await dbSave(nieuw);
     sessieTimerSessieId=nieuw.id;
     selected=nieuw;
+    localStorage.setItem('tbp_active_sessie', sessieTimerSessieId);
   } else {
     // Update bestaande sessie
     const bestaand=sessies.find(s=>s.id===sessieTimerSessieId);
@@ -1804,6 +1812,7 @@ async function opslaan(){
     sessies=[doelSessie,...sessies];
   }
   sessieTimerSessieId=null;
+  localStorage.removeItem('tbp_active_sessie');
   saveLocal();
   await dbSave(doelSessie);
   // Verplaats pending screenshots naar Supabase onder de echte sessie-ID
@@ -2068,7 +2077,7 @@ document.getElementById('main').addEventListener('click', async e=>{
   else if(action==='naar-lijst') {
     if(cameFromKlanten){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
     else if(cameFromMotoren){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
-    else{if(!sessieTimerSessieId){stopSessieTimer();sessieStartTijd=null;}navigeer('lijst');}
+    else{stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;localStorage.removeItem('tbp_active_sessie');navigeer('lijst');}
   }
   else if(action==='naar-motor') {
     if(cameFromKlanten){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
