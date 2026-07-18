@@ -1517,7 +1517,8 @@ async function sluitSessie(){
   sessies=sessies.map(x=>x.id===id?bijgewerkt:x);
   if(selected?.id===id) selected=bijgewerkt;
   saveLocal(); await dbSave(bijgewerkt);
-  render();
+  localStorage.removeItem('tbp_active_sessie');
+  navigeer('detail', bijgewerkt);
 }
 async function slaTimerDuurOp(){
   if(!sessieTimerSessieId||!sessieStartTijd) return;
