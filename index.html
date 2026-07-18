@@ -1045,15 +1045,15 @@ function renderNieuw(){
     <div id="fout-box-top" style="display:none" class="error-box"></div>
     <div id="opslaan-feedback" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;margin-bottom:8px">✓ Runs opgeslagen</div>
     <div class="actions-row" style="margin-bottom:12px">
-      ${sessieStartTijd?`<button class="btn-blue-lg" data-action="runs-opslaan">⬇ Runs opslaan</button>`:''}
-      <button class="btn-blue-lg" data-action="opslaan" style="background:#059669">${sessieStartTijd?'✓ Sessie afsluiten':'Sessie opslaan'}</button>
+      <button class="btn-blue-lg" data-action="runs-opslaan">&#11015; Runs opslaan</button>
+      <button class="btn-blue-lg" data-action="opslaan" style="background:#059669">${sessieStartTijd?'&#10003; Sessie afsluiten':'Sessie opslaan'}</button>
       <button class="btn-outline" data-action="naar-lijst">Annuleren</button>
     </div>
     ${hasRuns?`<div id="runs-container">${pendingRuns.map((r,i)=>runCardHtml(r,i,pendingRuns.length)).join('')}</div>
     <div id="fout-box" style="display:none" class="error-box"></div>
     <div class="actions-row">
-      ${sessieStartTijd?`<button class="btn-blue-lg" data-action="runs-opslaan">⬇ Runs opslaan</button>`:''}
-      <button class="btn-blue-lg" data-action="opslaan" style="background:#059669">${sessieStartTijd?'✓ Sessie afsluiten':'Sessie opslaan'}</button>
+      <button class="btn-blue-lg" data-action="runs-opslaan">&#11015; Runs opslaan</button>
+      <button class="btn-blue-lg" data-action="opslaan" style="background:#059669">${sessieStartTijd?'&#10003; Sessie afsluiten':'Sessie opslaan'}</button>
       <button class="btn-outline" data-action="naar-lijst">Annuleren</button>
     </div>`:''}
   </div>`;
@@ -1130,10 +1130,12 @@ function renderDetail(){
             <h2 class="page-title" style="margin:0">${esc(selected.motorNummer)}</h2>
             ${eerste?.datum?`<span style="font-size:14px;color:#374151;font-weight:600">${fmtDt(eerste.datum)}</span>`:''}
           </div>
-          ${sessieStartTijd&&selected.id===sessieTimerSessieId?`<div style="display:flex;align-items:center;gap:10px;margin-left:auto">
-            <div id="sessie-timer" style="font-size:18px;font-weight:800;color:#1d4ed8;font-variant-numeric:tabular-nums;letter-spacing:1px">${fmtTimer(Math.floor((Date.now()-sessieStartTijd)/1000))}</div>
-            <button onclick="sluitSessie()" style="background:#ef4444;border:none;color:#fff;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⏹ Sessie afsluiten</button>
-          </div>`:''}
+          ${sessieStartTijd&&selected.id===sessieTimerSessieId
+            ?`<div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+                <div id="sessie-timer" style="font-size:18px;font-weight:800;color:#1d4ed8;font-variant-numeric:tabular-nums;letter-spacing:1px">${fmtTimer(Math.floor((Date.now()-sessieStartTijd)/1000))}</div>
+                <button onclick="sluitSessie()" style="background:#ef4444;border:none;color:#fff;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">&#9209; Sessie afsluiten</button>
+              </div>`
+            :`<button onclick="herstarTimer()" style="margin-left:auto;background:none;border:1.5px solid #2563eb;color:#2563eb;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">&#9201; Timer herstarten</button>`}
         </div>
         <div class="meta-selects-row">
           ${(selected.klant||effectiefCarbu(selected)||selected.motorMerk||selected.motorType||selected.motorNaam)?`<div class="detail-meta">
@@ -1503,6 +1505,17 @@ function hervattSessie(){
   pendingRuns=[EMPTY_RUN()]; ssPendingSave([]);
   navigeer('nieuw');
 }
+function herstarTimer(){
+  if(!selected) return;
+  stopSessieTimer();
+  sessieStartTijd = Date.now();
+  sessieTimerSessieId = selected.id;
+  sessiePauzeStart = null;
+  sessiePauzeeTotaal = 0;
+  sessieTimerInterval = setInterval(timerTick, 1000);
+  navigeer('detail', selected);
+}
+
 function startSessie(){
   stopSessieTimer();
   sessieStartTijd=Date.now();
