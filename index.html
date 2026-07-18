@@ -2078,7 +2078,7 @@ document.getElementById('main').addEventListener('click', async e=>{
   else if(action==='naar-lijst') {
     if(cameFromKlanten){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
     else if(cameFromMotoren){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromMotoren=false;saveViewState();if(sessionOriginMotorNr)localStorage.setItem('tbp_open_motor',sessionOriginMotorNr);sessionOriginMotorNr='';window.location.href='motoren.html';}
-    else{stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;localStorage.removeItem('tbp_active_sessie');navigeer('lijst');}
+    else{stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;localStorage.removeItem('tbp_active_sessie');lijstOpen=true;navigeer('lijst');}
   }
   else if(action==='naar-motor') {
     if(cameFromKlanten){await slaTimerDuurOp();stopSessieTimer();sessieStartTijd=null;sessieTimerSessieId=null;cameFromKlanten=false;saveViewState();window.location.href='klanten.html';}
