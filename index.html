@@ -1470,8 +1470,7 @@ function saveViewState() {
       selectedId: selected?.id || null,
       cameFromKlanten,
       cameFromMotoren,
-      sessionOriginMotorNr,
-      lijstOpen
+      sessionOriginMotorNr
     }));
   } catch(e) {}
 }
@@ -1483,7 +1482,7 @@ function restoreViewState() {
     if (s.cameFromKlanten) cameFromKlanten = true;
     if (s.cameFromMotoren) cameFromMotoren = true;
     if (s.sessionOriginMotorNr) sessionOriginMotorNr = s.sessionOriginMotorNr;
-    if (s.lijstOpen !== undefined) lijstOpen = s.lijstOpen;
+    // lijstOpen wordt niet meer hersteld — altijd true bij opstarten
     // Als geselecteerde sessie niet meer bestaat, val terug naar overzicht
     if (view === 'detail' && !selected) view = 'lijst';
     if (view === 'motoren' || view === 'motor-detail' || view === 'motor-nieuw') view = 'lijst';
