@@ -911,7 +911,15 @@ function renderLijst(){
     </button>
   </div>`;
   if(lijstOpen && !filtered.length){
-    h+=`<div class="empty-state"><div style="font-size:40px;margin-bottom:8px">🔍</div><div style="font-weight:600">Geen sessies gevonden</div><div style="font-size:13px;margin-top:4px">Importeer SPX-bestanden of voeg een sessie toe.</div></div>`;
+    const dbOk=document.querySelector('.db-status-ok, [style*="22c55e"]');
+    const heeftSessies=sessies.length>0;
+    const heeftZoek=!!zoek;
+    const heeftFilter=filterType!=='Alle'||filterUitkomst!=='Alle';
+    let diagMsg='';
+    if(!heeftSessies) diagMsg=`<div style="font-size:12px;color:#6b7280;margin-top:6px">Totaal in geheugen: <b>0 sessies</b> — controleer Supabase-verbinding of vernieuw de pagina (Ctrl+Shift+R).</div>`;
+    else if(heeftZoek||heeftFilter) diagMsg=`<div style="font-size:12px;color:#6b7280;margin-top:6px">${sessies.length} sessie(s) aanwezig maar verborgen door actieve filter/zoekopdracht.</div>`;
+    else diagMsg=`<div style="font-size:12px;color:#6b7280;margin-top:6px">${sessies.length} sessie(s) aanwezig maar gefilterd op motorstatus (niet-actieve motoren verborgen).</div>`;
+    h+=`<div class="empty-state"><div style="font-size:40px;margin-bottom:8px">🔍</div><div style="font-weight:600">Geen sessies gevonden</div>${diagMsg}</div>`;
   } else if(lijstOpen) {
     filtered.forEach(s=>{
       const best=bestRun(s.runs), eerste=s.runs?.[0];
