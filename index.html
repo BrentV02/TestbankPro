@@ -1084,10 +1084,12 @@ function renderNieuw(){
     </div>`:''}
     <div id="fout-box-top" style="display:none" class="error-box"></div>
     <div id="opslaan-feedback" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;margin-bottom:8px">✓ Runs opgeslagen</div>
-    <div class="actions-row" style="margin-bottom:12px">
-      <button class="btn-blue-lg" data-action="runs-opslaan">&#11015; Runs opslaan</button>
-      <button class="btn-blue-lg" data-action="opslaan" style="background:#059669">${sessieStartTijd?'&#10003; Sessie afsluiten':'Sessie opslaan'}</button>
-      <button class="btn-outline" data-action="naar-lijst">Annuleren</button>
+    <div style="position:sticky;top:0;z-index:20;background:#f3f4f6;padding:10px 0 8px;margin-bottom:4px">
+      <div class="actions-row">
+        <button class="btn-blue-lg" data-action="runs-opslaan">&#11015; Runs opslaan</button>
+        <button class="btn-blue-lg" data-action="opslaan" style="background:#059669">${sessieStartTijd?'&#10003; Sessie afsluiten':'Sessie opslaan'}</button>
+        <button class="btn-outline" data-action="naar-lijst">Annuleren</button>
+      </div>
     </div>
     ${hasRuns?`<div id="runs-container">${pendingRuns.map((r,i)=>runCardHtml(r,i,pendingRuns.length)).join('')}</div>
     <div id="fout-box" style="display:none" class="error-box"></div>
