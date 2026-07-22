@@ -300,7 +300,7 @@ const EMPTY_RUN = () => ({
 let sb = null;
 let sessies = [], view = 'lijst', selected = null, pendingRuns = [EMPTY_RUN()];
 let zoek = '', filterType = 'Alle', filterUitkomst = 'Alle';
-let lijstOpen = false;
+let lijstOpen = true;
 let cameFromKlanten = false;
 let cameFromMotoren = false;
 let sessionOriginMotorNr = '';
@@ -1556,6 +1556,7 @@ function startSessie(){
   localStorage.removeItem('tbp_active_sessie');
   sessiePauzeStart=null;
   sessiePauzeeTotaal=0;
+  cameFromMotoren=false;cameFromKlanten=false;sessionOriginMotorNr='';
   pendingRuns=[];ssPendingSave([]);navigeer('nieuw');
   sessieTimerInterval=setInterval(timerTick,1000);
 }
@@ -1745,11 +1746,11 @@ async function runsOpslaan(){
       carbuTestHoog:g('sf-cth'), carbuTestLaag:g('sf-ctl'),
       runs:nieuweRuns.map(r=>({...r,id:uuid()}))
     };
-    sessies=[nieuw,...sessies];
-    saveLocal(); await dbSave(nieuw);
     sessieTimerSessieId=nieuw.id;
     selected=nieuw;
     localStorage.setItem('tbp_active_sessie', sessieTimerSessieId);
+    sessies=[nieuw,...sessies];
+    saveLocal(); await dbSave(nieuw);
   } else {
     // Update bestaande sessie
     const bestaand=sessies.find(s=>s.id===sessieTimerSessieId);
