@@ -1076,16 +1076,16 @@ function renderNieuw(){
         <div class="ss-thumbs" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start">${thumbs}</div>
       </div>`;
     })()}
+    <div id="fout-box-top" style="display:none" class="error-box"></div>
+    <div id="opslaan-feedback" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;margin-bottom:8px">✓ Runs opgeslagen</div>
+    <button class="btn-blue-lg" data-action="runs-opslaan" style="margin-bottom:14px;width:100%">&#11015; Runs opslaan</button>
     ${hasRuns?`<div>
       <div class="runs-header">
         <div class="sec-label" id="runs-hdr" style="margin-bottom:0">Runs (${pendingRuns.length})</div>
         <button class="btn-add-run" data-action="add-run">+ Run toevoegen</button>
       </div>
-    </div>`:''}
-    <div id="fout-box-top" style="display:none" class="error-box"></div>
-    <div id="opslaan-feedback" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;margin-bottom:8px">✓ Runs opgeslagen</div>
-    ${hasRuns?`<button class="btn-blue-lg" data-action="runs-opslaan" style="margin-bottom:10px;width:100%">&#11015; Runs opslaan</button>`:''}
-    ${hasRuns?`<div id="runs-container">${pendingRuns.map((r,i)=>runCardHtml(r,i,pendingRuns.length)).join('')}</div>
+    </div>
+    <div id="runs-container">${pendingRuns.map((r,i)=>runCardHtml(r,i,pendingRuns.length)).join('')}</div>
     <div id="fout-box" style="display:none" class="error-box"></div>
     <div class="actions-row">
       <button class="btn-blue-lg" data-action="runs-opslaan">&#11015; Runs opslaan</button>
