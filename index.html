@@ -1001,10 +1001,12 @@ function renderNieuw(){
     <div class="head-row" style="margin-bottom:6px">
       <button class="btn-back" data-action="${cameFromMotoren?'naar-motor':'naar-lijst'}">←</button>
       <h2 class="page-title">${isImport?`📂 Importeren (${pendingRuns.length} run${pendingRuns.length>1?'s':''})` :'Nieuwe sessie'}</h2>
-      ${sessieStartTijd?`<div style="display:flex;align-items:center;gap:8px;margin-left:auto">
-        <div id="sessie-timer" style="font-size:20px;font-weight:800;color:#1d4ed8;font-variant-numeric:tabular-nums;letter-spacing:1px">${fmtTimer(Math.floor(timerElapsed()/1000))}</div>
-        <button id="pauze-btn" onclick="togglePauze()" style="background:${sessiePauzeStart?'#16a34a':'#6b7280'};border:none;color:#fff;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">${sessiePauzeStart?'▶ Hervatten':'⏸ Pauzeer'}</button>
-      </div>`:''}
+      <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap">
+        ${sessieStartTijd?`<div id="sessie-timer" style="font-size:20px;font-weight:800;color:#1d4ed8;font-variant-numeric:tabular-nums;letter-spacing:1px">${fmtTimer(Math.floor(timerElapsed()/1000))}</div>
+        <button id="pauze-btn" onclick="togglePauze()" style="background:${sessiePauzeStart?'#16a34a':'#6b7280'};border:none;color:#fff;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">${sessiePauzeStart?'▶ Hervatten':'⏸ Pauzeer'}</button>`:''}
+        <button class="btn-blue-lg" data-action="runs-opslaan" style="padding:6px 14px;font-size:13px">&#11015; Runs opslaan</button>
+        <button class="btn-blue-lg" data-action="opslaan" style="background:#059669;padding:6px 14px;font-size:13px">${sessieStartTijd?'&#10003; Sessie afsluiten':'Sessie opslaan'}</button>
+      </div>
     </div>
     ${isImport?'<p class="import-note">Vul de sessiegegevens in. De runs zijn automatisch ingelezen — controleer en pas aan waar nodig.</p>':''}
     <div class="form-section">
