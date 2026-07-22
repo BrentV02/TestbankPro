@@ -903,14 +903,14 @@ function renderLijst(){
       <option value="Alle"${filterUitkomst==='Alle'?' selected':''}>Alle uitkomsten</option>
       ${['Geslaagd','Afgekeurd','Lopend'].map(u=>`<option${filterUitkomst===u?' selected':''}>${u}</option>`).join('')}
     </select>
+    <button onclick="sortOrder=sortOrder==='nieuwste'?'oudste':'nieuwste';renderLijst()" style="background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:#374151;cursor:pointer;font-family:inherit;white-space:nowrap">
+      ${sortOrder==='nieuwste'?'↓ Nieuwste eerst':'↑ Oudste eerst'}
+    </button>
   </div>`:'<input id="zinput" style="display:none">'}`;
-  h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-    <button onclick="lijstOpen=!lijstOpen;saveViewState();renderLijst()" style="flex:1;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;gap:10px">
+  h+=`<div style="margin-bottom:12px">
+    <button onclick="lijstOpen=!lijstOpen;saveViewState();renderLijst()" style="width:100%;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:12px 18px;font-size:14px;font-weight:700;color:#374151;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;gap:10px">
       <span>📋 Bekijk eerdere tests${filtered.length?' ('+filtered.length+')':''}</span>
       <span style="font-size:12px;color:#9ca3af;transition:transform .2s;display:inline-block;transform:rotate(${lijstOpen?'180':'0'}deg)">▼</span>
-    </button>
-    <button onclick="sortOrder=sortOrder==='nieuwste'?'oudste':'nieuwste';renderLijst()" title="${sortOrder==='nieuwste'?'Nieuwste eerst':'Oudste eerst'}" style="background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:600;color:#374151;cursor:pointer;font-family:inherit;white-space:nowrap">
-      ${sortOrder==='nieuwste'?'↓ Nieuwste eerst':'↑ Oudste eerst'}
     </button>
   </div>`;
   if(lijstOpen && !filtered.length){
