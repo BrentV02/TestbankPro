@@ -933,7 +933,7 @@ function renderLijst(){
             <div class="sessie-title-row">
               ${s.klant?`<span class="sessie-motor">${esc(s.klant)}</span>`:''}
               ${typeBadge(s.testType)}${badge(s.uitkomst)}
-              ${eerste?.datum?`<span style="font-size:12px;color:#9ca3af;font-weight:600;margin-left:2px">${fmtDt(eerste.datum)}</span>`:''}
+              ${s.createdAt?`<span style="font-size:12px;color:#9ca3af;font-weight:600;margin-left:2px">${fmtDt(s.createdAt)}</span>`:eerste?.datum?`<span style="font-size:12px;color:#9ca3af;font-weight:600;margin-left:2px">${fmtDt(eerste.datum)}</span>`:''}
             </div>
             ${s.motorNummer?`<span class="sessie-klant">${esc(s.motorNummer)}</span>`:''}
             ${(motorInfo||s.carbu)?`<div class="sessie-info">
