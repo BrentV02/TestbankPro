@@ -789,8 +789,6 @@ function typeBadge(t) {
 }
 function gefilterde() {
   let r=[...sessies];
-  // Verberg sessies van gearchiveerde motoren
-  r=r.filter(s=>!s.motorNummer||(motorenCache[s.motorNummer]?.status||'Actief')==='Actief');
   if(zoek) r=r.filter(s=>['motorNummer','klant','carbu','opmerkingen'].some(k=>(s[k]||'').toLowerCase().includes(zoek.toLowerCase())));
   if(filterType!=='Alle') r=r.filter(s=>s.testType===filterType);
   if(filterUitkomst!=='Alle') r=r.filter(s=>s.uitkomst===filterUitkomst);
