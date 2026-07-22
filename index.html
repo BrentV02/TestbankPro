@@ -792,11 +792,7 @@ function gefilterde() {
   if(zoek) r=r.filter(s=>['motorNummer','klant','carbu','opmerkingen'].some(k=>(s[k]||'').toLowerCase().includes(zoek.toLowerCase())));
   if(filterType!=='Alle') r=r.filter(s=>s.testType===filterType);
   if(filterUitkomst!=='Alle') r=r.filter(s=>s.uitkomst===filterUitkomst);
-  r.sort((a,b)=>{
-    const da=a.runs?.[0]?.datum?new Date(a.runs[0].datum):new Date(a.createdAt||0);
-    const db=b.runs?.[0]?.datum?new Date(b.runs[0].datum):new Date(b.createdAt||0);
-    return db-da;
-  });
+  r.sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
   return r;
 }
 
