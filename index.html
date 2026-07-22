@@ -339,7 +339,7 @@ function fromRow(r) {
            motorMerk: r.motor_merk||'', motorType: r.motor_type||'', motorNaam: r.motor_naam||'',
            carbuVanBaanHoog: r.carbu_van_baan_hoog||'', carbuVanBaanLaag: r.carbu_van_baan_laag||'',
            carbuTestHoog: r.carbu_test_hoog||'', carbuTestLaag: r.carbu_test_laag||'',
-           duur: r.duur||null };
+           duur: r.duur||null, createdAt: r.created_at||null };
 }
 
 async function dbLoad() {
@@ -792,7 +792,11 @@ function gefilterde() {
   if(zoek) r=r.filter(s=>['motorNummer','klant','carbu','opmerkingen'].some(k=>(s[k]||'').toLowerCase().includes(zoek.toLowerCase())));
   if(filterType!=='Alle') r=r.filter(s=>s.testType===filterType);
   if(filterUitkomst!=='Alle') r=r.filter(s=>s.uitkomst===filterUitkomst);
-  r.sort((a,b)=>new Date(b.runs?.[0]?.datum||0)-new Date(a.runs?.[0]?.datum||0));
+  r.sort((a,b)=>{
+    const da=a.runs?.[0]?.datum?new Date(a.runs[0].datum):new Date(a.createdAt||0);
+    const db=b.runs?.[0]?.datum?new Date(b.runs[0].datum):new Date(b.createdAt||0);
+    return db-da;
+  });
   return r;
 }
 
@@ -1747,6 +1751,7 @@ async function runsOpslaan(){
     // Eerste keer: maak sessie aan
     const nieuw={
       id:uuid(), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam, duur:null,
+      createdAt:new Date().toISOString(),
       testType:document.getElementById('sf-tt').value,
       uitkomst:document.getElementById('sf-uk').value,
       opmerkingen:document.getElementById('sf-op').value,
@@ -1813,6 +1818,7 @@ async function opslaan(){
     // Nieuwe sessie
     doelSessie={
       id:uuid(), motorNummer:mn, klant, carbu, motorMerk, motorType, motorNaam, duur,
+      createdAt:new Date().toISOString(),
       testType:document.getElementById('sf-tt').value,
       uitkomst:document.getElementById('sf-uk').value,
       opmerkingen:document.getElementById('sf-op').value,
