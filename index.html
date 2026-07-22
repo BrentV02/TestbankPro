@@ -1081,10 +1081,10 @@ function renderNieuw(){
     ${hasRuns?`<div>
       <div class="runs-header">
         <div class="sec-label" id="runs-hdr" style="margin-bottom:0">Runs (${pendingRuns.length})</div>
+        <button class="btn-blue-lg" data-action="runs-opslaan" style="padding:6px 14px;font-size:13px">&#11015; Runs opslaan</button>
         <button class="btn-add-run" data-action="add-run">+ Run toevoegen</button>
       </div>
     </div>
-    <button class="btn-blue-lg" data-action="runs-opslaan" style="margin-bottom:10px;width:100%">&#11015; Runs opslaan</button>
     <div id="runs-container">${pendingRuns.map((r,i)=>runCardHtml(r,i,pendingRuns.length)).join('')}</div>
     <div id="fout-box" style="display:none" class="error-box"></div>
     <div class="actions-row">
